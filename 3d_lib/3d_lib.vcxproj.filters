@@ -1,0 +1,66 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="include">
+      <UniqueIdentifier>{d0e43f3d-6773-4e4f-bc7b-b418c0a16325}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{03cdb610-f01c-47a1-b3b2-7fa3a013a9d5}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="engine_include.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="engine.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="save_file.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="gl_shader.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="gl_texture.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="gl_mesh.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="glfw_window.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="gl_rendertarget.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="dear_imgui.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="mesh_loading.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="options.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="options_graph.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="utils.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="camera.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="camera2D.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="common_colors.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

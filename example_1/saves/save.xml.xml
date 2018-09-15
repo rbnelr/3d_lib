@@ -1,0 +1,18 @@
+<Colors type="struct">
+	<bg_color type="v3">0.00212469, 0.00439144, 0.0144438</bg_color>
+</Colors>
+<Cameras type="array">
+	<Camera type="struct">
+		<perspective_cam type="bool">true</perspective_cam>
+	</Camera>
+	<Perspective type="struct">
+		<fov type="flt">75 deg</fov>
+		<clip_near type="flt">0.1</clip_near>
+		<clip_far type="flt">512</clip_far>
+	</Perspective>
+	<Orthographic type="struct"/>
+</Cameras>
+<Camera type="struct">
+	<perspective_cam type="bool">true</perspective_cam>
+</Camera>
+

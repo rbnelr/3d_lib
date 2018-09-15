@@ -1,0 +1,10 @@
+<pos_world>-0.00354489, -0.0865043, 6.99671</pos_world>
+<altazimuth>0.120785 deg, -90 deg, 0 deg</altazimuth>
+<vfov>75 deg</vfov>
+<clip_near>0.0625</clip_near>
+<clip_far>1024</clip_far>
+<base_speed>1</base_speed>
+<fast_mult>4</fast_mult>
+<wireframe_enable>false</wireframe_enable>
+<current_voxel_example>0</current_voxel_example>
+

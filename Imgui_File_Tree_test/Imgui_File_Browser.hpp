@@ -1,19 +1,19 @@
 ﻿#pragma once
 
 #include "3d_lib/engine.hpp"
-#include "deps/mylibs/find_files.hpp"
+#include "mylibs/find_files.hpp"
 
 namespace imgui_file_browser {
 using namespace engine;
 
 struct Dynamic_File_Tree {
-
+	
 	struct File_Or_Dir {
 		bool		is_dir;
 		std::string	filename; // utf8
 
-		File_Or_Dir (bool is_dir): is_dir{is_dir} {}
-		File_Or_Dir (bool is_dir, std::string filename): is_dir{is_dir}, filename{filename} {}
+		File_Or_Dir (bool d): is_dir{d} {}
+		File_Or_Dir (bool d, std::string fn): is_dir{d}, filename{fn} {}
 		virtual ~File_Or_Dir () {}
 	};
 	struct File : File_Or_Dir {
@@ -24,9 +24,101 @@ struct Dynamic_File_Tree {
 		Directory (std::string filename): File_Or_Dir{true, filename} {}
 
 		bool	is_open = false; // dir needs to be open to be able to view files and subdirs in it (for performance reasons)
-		bool	is_valid = true; // non open dirs are always "valid"
+		bool	is_valid = true; // os can throw errors on file queries -> invalid dir (no files and subdirs), non open dirs are always "valid"
 
-		std::vector<unique_ptr<File_Or_Dir>> files;
+		std::vector<shared_ptr<Directory>>	dirs;
+		std::vector<shared_ptr<File>>		files;
+
+		unique_ptr<Directory_Watcher>		watcher = nullptr;
+
+		bool is_empty () {
+			return dirs.size() == 0 && files.size() == 0;
+		}
+
+		std::vector<shared_ptr<File_Or_Dir>> get_files (bool sort_alphabethical, bool subdirs_always_first) {
+			std::vector<shared_ptr<File_Or_Dir>> list;
+			for (auto& d : dirs)	list.push_back(d);
+			for (auto& f : files)	list.push_back(f);
+
+			std::sort(list.begin(),list.end(), [&] (shared_ptr<File_Or_Dir> const& l, shared_ptr<File_Or_Dir> const& r) {
+				if (subdirs_always_first && (l->is_dir != r->is_dir))
+					return l->is_dir;
+				return std::less<std::string>()(l->filename, r->filename);
+			});
+
+			return list;
+		}
+
+		void update (std::string const& path, std::string const& new_dirname, std::string const& file_filter) {
+			
+			auto old_dirs	= std::move(dirs);
+			auto old_files	= std::move(files);
+
+			if (filename != new_dirname) {
+				old_dirs.clear();
+				old_files.clear();
+			}
+			filename = new_dirname;
+
+			if (!is_open)
+				return; // dirs/files are empty
+
+			std::string dirpath = path + filename;
+
+			std::vector<std::string> dirnames;
+			std::vector<std::string> filenames;
+			is_valid = n_find_files::find_files(dirpath, &dirnames, &filenames, file_filter);
+
+			watcher = make_unique<Directory_Watcher>(dirpath);
+
+			if (is_valid) {
+				
+				// keep old Directory and File structures alive if we have the same dir/file in the old and the updated file tree -> this keeps directories open after a reload
+				for (auto& subdirname : dirnames) {
+					auto res = std::find_if(old_dirs.begin(),old_dirs.end(), [&] (shared_ptr<Directory>& d) { return d && d->filename == subdirname; });
+					auto dir = res != old_dirs.end() ? std::move(*res) : nullptr;
+
+					if (!dir)
+						dir = make_shared<Directory>(subdirname);
+					
+					dir->update(dirpath, subdirname, file_filter);
+
+					dirs.emplace_back(std::move(dir));
+				}
+				for (auto& filename : filenames) {
+					auto res = std::find_if(old_files.begin(),old_files.end(), [&] (shared_ptr<File>& f) { return f && f->filename == filename; });
+					auto file = res != old_files.end() ? std::move(*res) : nullptr;
+
+					if (!file)
+						file = make_shared<File>(filename);
+					
+					files.emplace_back(std::move(file));
+				}
+
+			}
+		}
+
+		void poll_files_changed (std::string const& path, std::string const& new_filename, std::string const& file_filter) {
+			
+			if (!is_open)
+				return;
+
+			std::vector<Directory_Watcher::File_Change> file_changes;
+			bool files_changed = watcher->poll_file_changes(&file_changes);
+
+			std::string dirpath = path + new_filename;
+
+			if (files_changed) {
+
+				for (auto& dir : dirs)
+					dir->update(dirpath, dir->filename, file_filter);
+			} else {
+				
+				for (auto& dir : dirs)
+					dir->poll_files_changed(dirpath, dir->filename, file_filter);
+			}
+
+		}
 
 		void set_open (bool o, std::string const& path, std::string const& file_filter) {
 			if (o == is_open) return;
@@ -34,114 +126,133 @@ struct Dynamic_File_Tree {
 			is_open = o;
 
 			if (!is_open) {
+				dirs.clear();
 				files.clear();
+				watcher = nullptr;
+
 				is_valid = true;
 			} else {
-				std::vector<std::string> dirnames;
-				std::vector<std::string> filenames;
-				is_valid = n_find_files::find_files(path, &dirnames, &filenames, file_filter);
-				if (is_valid) {
-					for (auto& d : dirnames)
-						files.emplace_back(make_unique<Directory>(d));
-					for (auto& f : filenames)
-						files.emplace_back(make_unique<File>(f));
-				}
+				update(path, filename, file_filter);
 			}
 		}
 	};
 
-	Directory						dir;
-	unique_ptr<Directory_Watcher>	watcher = nullptr;
+	std::string				base_path;
 
-	std::string						file_filter;
+	shared_ptr<Directory>	root_dir = make_shared<Directory>();
 
-	bool root_dir_is_valid () { return watcher != nullptr; }
+	std::string				file_filter;
 
-	Dynamic_File_Tree () {}
+	bool root_dir_is_valid () { return root_dir->is_valid; }
 
-	Dynamic_File_Tree (std::string const& dir_path, std::string const& file_filter) {
-		dir = Directory(dir_path);
-		watcher = false;
-		this->file_filter = file_filter;
-
-		watcher = make_unique<Directory_Watcher>(dir_path);
-		if (!watcher->directory_is_valid())
-			watcher = nullptr;
+	void update (std::string const& new_dirname) {
+		root_dir->update(base_path, new_dirname, file_filter);
+	}
+	void poll_files_changed (std::string const& dirname) {
+		root_dir->poll_files_changed(base_path, dirname, file_filter);
 	}
 
-	std::string const& get_path () {
-		return dir.filename;
-	}
-	std::string const& get_file_filter () {
-		return file_filter;
+	std::string const& get_root_dirname () {
+		return root_dir->filename;
 	}
 
-	std::string get_parent_dir_path () {
-		std::string dir = get_path();
-		assert(dir.size() > 0 && dir[dir.size() -1] == '/');
-
-		if (dir.size() == 3 && dir[1] == ':') // "C:/" -> "C:/"
-			return dir;
-
-		dir[dir.size() -1] = '#'; // get rid of last '/'
-
-		auto slash_pos = dir.find_last_of('/');
-		if (slash_pos == dir.npos)
-			return "./";
-
-		dir.resize(slash_pos +1);
-		return dir;
-	}
-};
-
-std::string path_from_pattern (std::string const& file_pattern, std::string* file_filter) {
-	std::string path = file_pattern;
-
-	bool prev_char_was_slash = false;
-	for (auto it = path.begin(); it != path.end();) {
-		bool erase_this_char = false;
-
-		if (*it == '\\')
-			*it = '/';
-
-		if (*it == '/' && prev_char_was_slash)
-			erase_this_char = true;
-
-		prev_char_was_slash = *it == '/';
-
-		if (erase_this_char)
-			it = path.erase(it);
-		else
-			++it;
-	}
-
-	{
-		std::string filter;
+	static void split_path (std::string path, std::string* basepath, std::string* dirname) {
+		assert(path.size() > 0 && path.back() != '/');
 
 		auto pos = path.find_last_of('/');
 		if (pos == path.npos) {
-			filter = path;
-			path = "";
+
+			*basepath = "";
+			*dirname = std::move(path);
+
 		} else {
-			filter = path.substr(pos +1);
-			path.resize(pos);
+
+			*dirname = path.substr(pos +1);
+
+			path.resize(pos +1);
+			*basepath = std::move(path);
 		}
 
-		if (filter.size() == 0)
-			filter = "*";
-		else
-			filter = prints("*%s*", filter.c_str());
+		if (dirname->size() == 0)
+			*dirname = ".";
+		if (dirname->back() != '/')
+			*dirname += '/';
+	}
+	static void path_from_pattern (std::string const& file_pattern, std::string* basepath, std::string* dirname, std::string* file_filter) {
+		std::string path = file_pattern;
 
-		*file_filter = filter;
+		bool prev_char_was_slash = false;
+		for (auto it = path.begin(); it != path.end();) {
+			bool erase_this_char = false;
+
+			if (*it == '\\')
+				*it = '/';
+
+			if (*it == '/' && prev_char_was_slash)
+				erase_this_char = true;
+
+			prev_char_was_slash = *it == '/';
+
+			if (erase_this_char)
+				it = path.erase(it);
+			else
+				++it;
+		}
+
+		{
+			std::string filter;
+
+			auto pos = path.find_last_of('/');
+			if (pos == path.npos) {
+				filter = path;
+				path = "";
+			} else {
+				filter = path.substr(pos +1);
+				path.resize(pos);
+			}
+
+			if (filter.size() == 0)
+				filter = "*";
+			else
+				filter = prints("*%s*", filter.c_str());
+
+			*file_filter = std::move(filter);
+		}
+
+		split_path(std::move(path), basepath, dirname);
+	}
+	void get_parent_dir_path (std::string path, std::string* parent_path, std::string* dirname) {
+		assert(path.size() > 0 && path[path.size() -1] == '/');
+		path.resize( path.size() -1 );
+
+		split_path(std::move(path), parent_path, dirname);
+	}
+	
+	void make_dir_root_dir (shared_ptr<Directory>& dir, std::string const& new_basepath) {
+		base_path = new_basepath;
+		root_dir = dir;
+	}
+	void make_parent_dir_root_dir () {
+
+		assert(has_parent_dir());
+			
+		std::string new_root_dirname;
+		std::string new_base_path;
+
+		get_parent_dir_path(std::move(base_path), &new_base_path, &new_root_dirname);
+
+		auto new_root_dir = make_shared<Directory>(new_root_dirname);
+		new_root_dir->dirs.push_back( root_dir );
+		new_root_dir->is_open = true; // need to set this to open or else the existing subdirs will be thrown away and recreated
+
+		base_path = std::move(new_base_path);
+		root_dir = new_root_dir;
 	}
 
-	if (path.size() == 0)
-		path += '.';
-	if (path.back() != '/')
-		path += '/';
+	bool has_parent_dir () { return base_path.size() > 0; };
+	
+};
 
-	return path;
-}
 
 struct Imgui_File_Browser {
 	
@@ -151,36 +262,66 @@ struct Imgui_File_Browser {
 
 	bool				is_valid () { return file_tree.root_dir_is_valid(); };
 
+	bool				trigger_folder_changed;
+
 	Imgui_File_Browser (std::string initial_file_pattern) {
 		file_pattern = std::move(initial_file_pattern);
 	}
 
 	void show (Input& inp) {
 		
-		imgui::InputText_str("dir", &file_pattern);
+		imgui::InputText_str("###dir", &file_pattern);
+		{
+			bool valid = file_tree.root_dir_is_valid();
+			imgui::SameLine();	imgui::TextColored(valid ? ImVec4(0,1,0,1) : ImVec4(1,0,0,1), valid ? "OK" : "FAIL!");
+		}
 
-		std::string file_filter;
-		std::string path = path_from_pattern(file_pattern, &file_filter);
+		std::string new_basepath, new_dirname, new_file_filter;
+		Dynamic_File_Tree::path_from_pattern(file_pattern, &new_basepath, &new_dirname, &new_file_filter);
 
-		bool folder_changed = file_tree.get_path() != path || file_tree.get_file_filter() != file_filter;
-		if (folder_changed)
-			file_tree = Dynamic_File_Tree(path, file_filter);
+		std::vector<std::string> changed_files;
 
-		if (folder_changed)
-			printf("%s%s\n", path.c_str(), file_filter.c_str());
+		imgui::SameLine();
+		bool folder_changed =	imgui::Button("Reload")
+							||	trigger_folder_changed
+							||	file_tree.base_path				!= new_basepath
+							||	file_tree.get_root_dirname()	!= new_dirname
+							||	file_tree.file_filter			!= new_file_filter
+				//(watcher && watcher->poll_file_changes(&changed_files))
+				; // directory watcher reports changes in all subdirs (even if we dont have those folders open), but just update the file tree anyway for now
+		if (folder_changed) {
+			file_tree.base_path = new_basepath;
+			file_tree.file_filter = new_file_filter;
+			file_tree.update(new_dirname);
+			
+			//assert(file_tree.root_dir_is_valid() == watcher->directory_is_valid());
+		}
 
-		bool valid = file_tree.root_dir_is_valid();
-		imgui::SameLine();	imgui::TextColored(valid ? ImVec4(0,1,0,1) : ImVec4(1,0,0,1), valid ? "OK" : "FAIL!");
+		file_tree.poll_files_changed(new_dirname);
+
+		trigger_folder_changed = false;
+
+		if (new_file_filter != "*" && inp._buttons[GLFW_KEY_TAB].went_down) {
+			if (file_tree.root_dir->dirs.size() > 0) {
+				file_tree.make_dir_root_dir(file_tree.root_dir->dirs[0], file_tree.base_path + file_tree.get_root_dirname());
+
+				file_pattern = file_tree.base_path + file_tree.get_root_dirname();
+				trigger_folder_changed = true;
+
+				// TODO: imgui keeps overwriting our cahnge of the file_pattern
+			}
+		}
 
 		struct Recurse {
 			Imgui_File_Browser* this_;
-			bool folder_changed;
+			bool	folder_changed;
+			bool*	trigger_folder_changed;
 			Input& inp;
 			
-			void recurse (Dynamic_File_Tree::Directory* dir, std::string const& path, int depth = 0) {
+			void recurse (shared_ptr<Dynamic_File_Tree::Directory> dir, std::string const& path, int depth = 0) {
 				
 				bool default_open = depth == 0;
-				bool open = dir->is_open || (folder_changed && default_open);
+				bool open = dir->is_open || (default_open && folder_changed);
 
 				imgui::SetNextTreeNodeOpen(open);
 
@@ -200,20 +341,28 @@ struct Imgui_File_Browser {
 				}
 
 				if (depth == 0) {
-					imgui::PushStyleVar(ImGuiStyleVar_FrameRounding, 5);
+					if (this_->file_tree.has_parent_dir()) {
+						imgui::PushStyleVar(ImGuiStyleVar_FrameRounding, 5);
 
-					imgui::SameLine();
-					if (imgui::SmallButton(prints(" .. ###%s", dir->filename.c_str()).c_str())) { // exit directory
-						this_->file_pattern = this_->file_tree.get_parent_dir_path();
+						imgui::SameLine();
+						if (imgui::SmallButton(prints(" .. ###%s", dir->filename.c_str()).c_str())) { // exit directory
+							this_->file_tree.make_parent_dir_root_dir();
+
+							this_->file_pattern = this_->file_tree.base_path + this_->file_tree.get_root_dirname();
+							*trigger_folder_changed = true;
+						}
+
+						imgui::PopStyleVar();
 					}
-
-					imgui::PopStyleVar();
 				} else {
 					imgui::PushStyleVar(ImGuiStyleVar_FrameRounding, 5);
 
 					imgui::SameLine();
 					if (imgui::SmallButton(prints(" -> ###%s", dir->filename.c_str()).c_str())) { // enter directory (make it root of of the Imgui_File_Tree)
-						this_->file_pattern = path;
+						this_->file_tree.make_dir_root_dir(dir, path);
+
+						this_->file_pattern = this_->file_tree.base_path + this_->file_tree.get_root_dirname();
+						*trigger_folder_changed = true;
 					}
 
 					imgui::PopStyleVar();
@@ -222,12 +371,12 @@ struct Imgui_File_Browser {
 				//if (!dir.valid && imgui::IsItemHovered()) imgui::SetTooltip("reason for invalid dir");
 				
 				if (open) {	
-					for (auto& f : dir->files) {
+					for (auto& f : dir->get_files(false, true)) {
 						if (f->is_dir) {
-							auto* subdir = (Dynamic_File_Tree::Directory*)f.get();
-							recurse(subdir, path + subdir->filename, depth +1);
+							auto subdir = std::static_pointer_cast<Dynamic_File_Tree::Directory>(f);
+							recurse(subdir, path + dir->filename, depth +1);
 						} else {
-							auto* file = (Dynamic_File_Tree::File*)f.get();
+							auto file = std::static_pointer_cast<Dynamic_File_Tree::File>(f);
 							
 							auto filepath = path + file->filename;
 
@@ -237,7 +386,7 @@ struct Imgui_File_Browser {
 						}
 					}
 		
-					if (dir->files.size() == 0) {
+					if (dir->is_empty()) {
 						imgui::PushStyleColor(ImGuiCol_Text, ImVec4(0.3f,0.3f,0.3f,1));
 						imgui::Text("<empty>");
 						imgui::PopStyleColor();
@@ -248,7 +397,7 @@ struct Imgui_File_Browser {
 			}
 		};
 		
-		Recurse{this, folder_changed, inp}.recurse(&file_tree.dir, file_tree.dir.filename);
+		Recurse{this, folder_changed, &trigger_folder_changed, inp}.recurse(file_tree.root_dir, file_tree.base_path);
 
 		/*
 		

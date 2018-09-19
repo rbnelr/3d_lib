@@ -2,21 +2,12 @@
 
 #include "engine_include.hpp"
 
-#include "deps/mylibs/parse.hpp"
-#include "deps/mylibs/directory_watcher.hpp"
+#include "mylibs/parse.hpp"
+#include "mylibs/directory_watcher.hpp"
 
 #include <unordered_map>
 
-template <typename T> bool contains (std::vector<T> const& c, T const& val) {
-	return std::find(c.begin(), c.end(), val) != c.end();
-}
-template <typename T> bool any_contains (std::vector<T> const& as, std::vector<T> const& bs) {
-	for (auto& a : as) {
-		if (contains(bs, a))
-			return true;
-	}
-	return false;
-}
+#include "mylibs/containers.hpp"
 
 namespace engine {
 using namespace simple_file_io;
@@ -407,7 +398,7 @@ struct Shader_Manager {
 
 		std::vector<std::string> changed_files;
 		for (auto& dw : dir_watchers)
-			dw->poll_file_changes(&changed_files);
+			dw->poll_file_changes_ignore_removed(&changed_files);
 
 		for (auto& is : inline_shader_files) {
 			if (is.second.was_changed) {

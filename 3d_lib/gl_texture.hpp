@@ -9,7 +9,7 @@
 
 #include "deps/stb/stb_image.h"
 
-#include "deps/mylibs/image_processing.hpp"
+#include "mylibs/image_processing.hpp"
 
 namespace engine {
 namespace texture_n {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "deps/mylibs/colors.hpp"
+#include "mylibs/colors.hpp"
 
 namespace common_colors {
 	using namespace colors;

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "deps/mylibs/basic_typedefs.hpp"
-#include "deps/mylibs/vector.hpp"
-#include "deps/mylibs/float_precision.hpp"
+#include "mylibs/basic_typedefs.hpp"
+#include "mylibs/vector.hpp"
+#include "mylibs/float_precision.hpp"
 
 // http://paulbourke.net/geometry/polygonise/
 

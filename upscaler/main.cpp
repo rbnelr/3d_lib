@@ -1,8 +1,9 @@
 
 #include "3d_lib/engine.hpp"
 #include "3d_lib/camera2D.hpp"
-#include "deps/mylibs/find_files.hpp"
+#include "mylibs/find_files.hpp"
 #include "3d_lib/common_colors.hpp"
+using namespace n_find_files;
 using namespace engine;
 using namespace common_colors;
 

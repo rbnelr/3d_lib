@@ -3,8 +3,8 @@
 #include "engine_include.hpp"
 #include "dear_imgui.hpp"
 #include "gl_rendertarget.hpp"
-#include "deps/mylibs/timer.hpp"
-#include "deps/mylibs/exp_moving_avg.hpp"
+#include "mylibs/timer.hpp"
+#include "mylibs/exp_moving_avg.hpp"
 
 #include "save_file.hpp"
 

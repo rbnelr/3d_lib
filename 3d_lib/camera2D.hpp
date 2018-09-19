@@ -31,6 +31,8 @@ struct Camera2D {
 	bool	dragging = false;
 	v2		grab_pos_world;
 
+	int		key_reset = 'R';
+
 	void zoom_to_vsize_world (flt vsize_world) {
 		flt zoom_factor = base_vsize_world / vsize_world;
 		zoom_log = log2(zoom_factor);
@@ -47,16 +49,19 @@ struct Camera2D {
 			imgui::DragFloat2("pos_world", &pos_world.x, 1.0f / 100);
 			imgui::DragFloat("rot", &rot, 1.0f / 100);
 		
+			imgui::DragFloat("base_vsize_world", &base_vsize_world, 1.0f / 100);
 			imgui::DragFloat("zoom_log", &zoom_log, 1.0f / 100);
-		
+
 			imgui::DragFloat("clip_near", &clip_near, 1.0f / 100);
 			imgui::DragFloat("clip_far", &clip_far, 1.0f / 100);
 		
 			imgui::DragFloat("base_speed", &base_speed, 1.0f / 10);
 			imgui::DragFloat("fast_mult", &fast_mult, 1.0f / 10);
+
+			imgui::Checkbox("fixed", &fixed);
 		}
 		
-		if (inp.went_down('R')) { // Reset camera
+		if (inp.went_down(key_reset)) { // Reset camera
 			pos_world = 0;
 			rot = 0;
 			zoom_log = 0;

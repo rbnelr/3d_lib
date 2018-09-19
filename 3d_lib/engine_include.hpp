@@ -33,16 +33,16 @@ using std::make_shared;
 //
 
 // my includes
-#include "deps/mylibs/basic_typedefs.hpp"
-#include "deps/mylibs/vector.hpp"
-#include "deps/mylibs/simple_file_io.hpp"
-#include "deps/mylibs/string.hpp"
+#include "mylibs/basic_typedefs.hpp"
+#include "mylibs/vector.hpp"
+#include "mylibs/simple_file_io.hpp"
+#include "mylibs/string.hpp"
 
 static constexpr bool not_implemented = false; // use like: assert(not_implemented)
 											   //
 
-#include "deps/mylibs/colors.hpp"
-#include "deps/mylibs/float_precision.hpp"
+#include "mylibs/colors.hpp"
+#include "mylibs/float_precision.hpp"
 
 namespace engine {
 	using namespace basic_typedefs;

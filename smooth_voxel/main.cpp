@@ -1,7 +1,7 @@
 
 #include "3d_lib/engine.hpp"
 #include "3d_lib/camera.hpp"
-#include "deps/mylibs/random.hpp"
+#include "mylibs/random.hpp"
 using namespace engine;
 
 flt smoothstep_n (flt x, int n) {

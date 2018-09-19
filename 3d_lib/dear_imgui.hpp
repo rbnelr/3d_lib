@@ -67,7 +67,7 @@ namespace ImGui {
 	}
 }
 
-#include "deps/mylibs/image_processing.hpp"
+#include "mylibs/image_processing.hpp"
 
 namespace engine {
 	Texture2D imgui_atlas;

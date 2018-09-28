@@ -157,8 +157,7 @@ struct Dynamic_File_Tree {
 	}
 
 	static void split_path (std::string path, std::string* basepath, std::string* dirname) {
-		assert(path.size() > 0 && path.back() != '/');
-
+		
 		auto pos = path.find_last_of('/');
 		if (pos == path.npos) {
 

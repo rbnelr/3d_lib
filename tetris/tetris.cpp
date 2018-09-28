@@ -143,20 +143,20 @@ struct Active_Tetromino {
 		}
 	}
 
-	iv2 rotate (iv2 p) {
+	iv2 rotate (iv2 p, int ori) {
 		return rotate2_90(p, ori);
 	}
 
-	void rotate_blocks () {
+	void rotate_blocks (int ori) {
 		blocks_rotated_world = type->blocks;
 
 		for (auto& b : blocks_rotated_world)
-			b = rotate(b) + pos_world;
+			b = rotate(b, ori) + pos_world;
 	}
 
-	bool check_blocks_overlap (Placed_Blocks* blocks, iv2 pos_world) {
+	bool check_blocks_overlap (Placed_Blocks* blocks, iv2 pos_world, int ori) {
 		for (iv2 b : type->blocks) {
-			b = rotate(b) + pos_world;
+			b = rotate(b, ori) + pos_world;
 			if (!blocks->get(b) || blocks->get(b)->type != nullptr)
 				return true;
 		}
@@ -188,13 +188,13 @@ struct Active_Tetromino {
 
 		move_timer -= dt * speedup * (move_fast ? move_fast_multiplier : 1);
 
-		if (!check_blocks_overlap(blocks, pos_world +iv2(move_dir,0))) {
+		if (!check_blocks_overlap(blocks, pos_world +iv2(move_dir,0), ori)) {
 			pos_world += iv2(move_dir,0);
 		}
 
 		iv2 dropped_pos = pos_world + iv2(0,-1);
 
-		if (move && !check_blocks_overlap(blocks, dropped_pos)) {
+		if (move && !check_blocks_overlap(blocks, dropped_pos, ori)) {
 			pos_world += iv2(0,-1); 
 		}
 
@@ -202,12 +202,18 @@ struct Active_Tetromino {
 		if (inp.went_down('Q'))	rot += 1;
 		if (inp.went_down('E'))	rot -= 1;
 
-		ori += rot;
-		ori = (int)((uint)ori % 4);
+		{
+			auto new_ori = ori + rot;
+			new_ori = (int)((uint)new_ori % 4);
 
-		rotate_blocks();
+			rotate_blocks(new_ori);
 
-		if (move && check_blocks_overlap(blocks, dropped_pos)) {
+			if (!check_blocks_overlap(blocks, dropped_pos, new_ori)) {
+				ori = new_ori;
+			}
+		}
+
+		if (move && check_blocks_overlap(blocks, dropped_pos, ori)) {
 			place_tetronimo(blocks);
 		}
 	}

@@ -77,7 +77,9 @@ namespace string {
 		// overallocate, this might be more performant than having to process the wchar twice
 		std::string utf8 (wchar.size() * 4 +1, '\0'); // utf8 string can never be longer than 4x the number of wchars, right?
 
-		auto res = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS|WC_NO_BEST_FIT_CHARS, wchar.c_str(), -1, &utf8[0], (int)utf8.size(), NULL, NULL);
+		// WC_NO_BEST_FIT_CHARS sometimes throws erros ?
+		auto res = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wchar.c_str(), -1, &utf8[0], (int)utf8.size(), NULL, NULL);
+		auto err = GetLastError();
 		assert(res > 0 && res <= utf8.size());
 
 		utf8.resize(res -1);

@@ -115,8 +115,8 @@ namespace engine {
 		{ "uv",					FV2,	(int)offsetof(Texture_Draw_Rect, uv) },
 	}};
 
-	void draw_rect (v2 pos, v2 size, Texture2D const& tex, lrgba tint=1) {
-
+	void draw_rect (v2 pos, v2 size, flt rot, v2 uv_pos, v2 uv_size, Texture2D const& tex, lrgba tint=1) {
+		
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glDisable(GL_DEPTH_TEST);
@@ -145,22 +145,26 @@ namespace engine {
 			$include "common.frag"
 			
 			in		vec2	vs_uv;
-
+			
+			uniform vec2	uv_remap_l = vec2(0.0);
+			uniform vec2	uv_remap_h = vec2(1.0);
 			uniform vec4	tint;
 
 			uniform sampler2D	tex;
 
 			vec4 frag () {
-				return texture(tex, vs_uv) * tint;
+				return texture(tex, mix(uv_remap_l, uv_remap_h, vs_uv)) * tint;
 			}
 		)_SHAD");
 
 		auto* s = use_shader("_simple_draw_rect");
 		if (s) {
 
-			hm model_to_world = translateH(v3(pos,1)) * scaleH(v3(size,1));
+			hm model_to_world = translateH(v3(pos,1)) * hm( rotate2(rot) * scale2(size) );
 
 			set_uniform(s, "model_to_world", model_to_world.m4());
+			set_uniform(s, "uv_remap_l", uv_pos);
+			set_uniform(s, "uv_remap_h", uv_pos +uv_size);
 			set_uniform(s, "tint", tint);
 
 			bind_texture(s, "tex", 0, tex);
@@ -168,6 +172,26 @@ namespace engine {
 			static auto rect = engine::gen_rect<Texture_Draw_Rect>([] (v2 p, v2 uv) { return Texture_Draw_Rect{p, uv}; }).upload();
 			rect.draw(*s);
 		}
+	}
+
+	void draw_rect (v2 pos, v2 size, flt rot, Texture2D const& tex, lrgba tint=1) {
+		draw_rect(pos, size, rot, 0,1, tex, tint);
+	}
+	void draw_rect (v2 pos, v2 size, Texture2D const& tex, lrgba tint=1) {
+		draw_rect(pos, size, 0, tex, tint);
+	}
+
+	void draw_sprite (v2 pos, v2 size, int rot, iv2 tile_pos, iv2 tiles_count, Texture2D const& atlas, lrgba tint=1) {
+		// When using linear filtering we get tile bleeding on every tile edge, since the uvs start and end exactly between two texels -> simply offsetting the pixels is actually wrong
+		//  since then the border pixels are half as wide as they are supposed to be (?)
+		//  only proper solution is 1 (or a few) pixels border around each tile (?)
+
+		flt pixel_leak_fix = 0.001f; // only works for nearest filtering
+
+		v2 uv_pos = (v2)tile_pos / (v2)tiles_count + pixel_leak_fix;
+		v2 uv_size = 1 / (v2)tiles_count - pixel_leak_fix*2;
+
+		draw_rect(pos +0.5f, size, deg(90) * rot, uv_pos, uv_size, atlas, tint);
 	}
 
 	struct Vertex_Draw_Lines {

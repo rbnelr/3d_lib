@@ -85,14 +85,12 @@ namespace engine {
 		VSYNC_OFF,
 	};
 
-	class Display {
+	class Application {
 		GLFWwindow*			window = nullptr;
 
 		e_vsync_mode		vsync_mode;
 
 		WINDOWPLACEMENT		win32_windowplacement = {}; // Zeroed
-
-		Input inp;
 
 		bool				is_fullscreen = false;
 		iv2					fullscreen_resolution = -1; // -1 => native res
@@ -124,7 +122,7 @@ namespace engine {
 			fprintf(stderr, "GLFW Error! 0x%x '%s'\n", err, msg);
 		}
 		static void button_event (GLFWwindow* window, int button, int action, int mods) {
-			Input* inp = &((Display*)glfwGetWindowUserPointer(window))->inp;
+			Input* inp = &((Application*)glfwGetWindowUserPointer(window))->inp;
 
 			bool went_down = action == GLFW_PRESS;
 			bool went_up = action == GLFW_RELEASE;
@@ -148,7 +146,7 @@ namespace engine {
 		}
 
 		static void glfw_mouse_pos_event (GLFWwindow* window, double xpos, double ypos) {
-			Input* inp = &((Display*)glfwGetWindowUserPointer(window))->inp;
+			Input* inp = &((Application*)glfwGetWindowUserPointer(window))->inp;
 
 			v2 new_pos = v2((flt)xpos,(flt)ypos);
 			static v2 prev_pos;
@@ -168,7 +166,7 @@ namespace engine {
 			button_event(window, button, action, mods);
 		}
 		static void glfw_mouse_scroll (GLFWwindow* window, double xoffset, double yoffset) {
-			Input* inp = &((Display*)glfwGetWindowUserPointer(window))->inp;
+			Input* inp = &((Application*)glfwGetWindowUserPointer(window))->inp;
 
 			inp->_mousewheel.delta += (flt)yoffset;
 
@@ -179,14 +177,148 @@ namespace engine {
 			button_event(window, key, action, mods);
 		}
 		static void glfw_char_event (GLFWwindow* window, unsigned int codepoint, int mods) {
-			Input* inp = &((Display*)glfwGetWindowUserPointer(window))->inp;
+			Input* inp = &((Application*)glfwGetWindowUserPointer(window))->inp;
 
 			inp->events.push_back({ Input::Event::TYPING });
 			inp->events.back().Typing.codepoint = (utf32)codepoint;
 		}
 		
+		Delta_Time_Measure dt_measure;
+		bool stop_recursion = false;
+
+		static void run_frame (GLFWwindow* window) {
+			auto* app = ((Application*)glfwGetWindowUserPointer(window));
+
+			shader_manager.poll_reload_shaders(app->frame_i);
+
+			auto& inp = app->poll_input(app->inp.gui_input_enabled);
+
+			if (inp.went_down(GLFW_KEY_F11))
+				app->toggle_fullscreen();
+
+			bool trigger_load = inp.alt_combo('L') || app->frame_i == 0;
+			bool trigger_save = inp.alt_combo('S');
+			save = save_file("saves/save.xml", trigger_load, trigger_save);
+
+			static bool imgui_enabled = true;
+			if (inp.went_down(GLFW_KEY_F2))
+				imgui_enabled = !imgui_enabled;
+			if (inp.went_down(GLFW_KEY_F1))
+				inp.gui_input_enabled = !inp.gui_input_enabled;
+
+			begin_imgui(&inp, app->dt, inp.gui_input_enabled, imgui_enabled);
+
+			{
+				flt dt = app->dt;
+				flt fps = 1.0f / dt;
+
+				static Exp_Moving_Avg dt_avg  (1.0f / 60, 0.2f);
+				static Exp_Moving_Avg fps_avg (60, 0.2f);
+
+				if (app->frame_i > 0) { // fps is inf, dt is 0 on frame 0
+					dt_avg.update(dt, dt);
+					fps_avg.update(fps, dt);
+				}
+
+				ImGui::Text("%8.3f fps  %8.3f ms (%8.3f)", fps_avg.value, dt_avg.value * 1000, dt * 1000);
+
+				{
+					static flt values_per_pixel = 0.5f;
+					static flt plot_height = 50;
+					static bool heartbeat_style = false;
+
+					flt w = ImGui::GetContentRegionAvailWidth();
+
+					int value_count = max(1, (int)round(w * values_per_pixel));
+
+					static std::vector<flt> values (value_count, 0);
+					static int cur_value = 0;
+
+					values[cur_value] = dt * 1000;
+
+					cur_value = (cur_value +1) % (int)values.size();
+
+					if ((int)values.size() != value_count) {
+						int delta = value_count -(int)values.size();
+
+						if (delta < 0) {
+							int values_erasable_at_end = (int)values.size() -cur_value;
+
+							int values_to_erase = -delta;
+
+							int erase_end = min(values_to_erase, values_erasable_at_end);
+							int erase_begin = values_to_erase -erase_end;
+
+							values.erase(values.begin() +cur_value, values.begin() +cur_value +erase_end);
+							values.erase(values.begin(), values.begin() +erase_begin); // wrap around the erase
+
+							cur_value -= erase_begin;
+
+							cur_value = cur_value % (int)values.size(); // since we erased, cur_value can happen to be at one past the end again
+
+						} else {
+							values.insert(values.begin() +cur_value, delta, 0);
+						}
+
+					}
+
+					ImGui::PlotLines("##frametime", values.data(), (int)values.size(), heartbeat_style ? 0 : cur_value, "frametime [ms]", 0, 1.0f / 60 * 2.5f * 1000, ImVec2(w, plot_height));
+					if (ImGui::BeginPopupContextItem("frametime plot popup")) {
+						ImGui::SliderFloat("values_per_pixel", &values_per_pixel, 0, 1.5f);
+						ImGui::SliderFloat("plot_height", &plot_height, 0, 200);
+						ImGui::Checkbox("heartbeat_style", &heartbeat_style);
+						ImGui::EndPopup();
+					}
+				}
+
+				app->dt = min(app->dt, 1.0f / 20); // prevent big timestep when paused or frozen for whatever reason
+			}
+
+			//if (	(inp.buttons[GLFW_MOUSE_BUTTON_RIGHT].went_down && !ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow)) // unfocus imgui windows when right clicking outside of them
+			//	|| dsp->frame_i < 3 || !imgui_enabled || !inp.gui_input_enabled ) { // imgui steals focus on the third frame for some reason
+			//	ImGui::ClearActiveID();
+			//	//ImGui::FocusWindow(NULL);
+			//}
+
+			{
+				static bool ShowDemoWindow = false;
+				imgui::Checkbox("ShowDemoWindow", &ShowDemoWindow);
+				if (ShowDemoWindow) {
+					imgui::ShowDemoWindow(&ShowDemoWindow);
+				}
+			}
+
+			imgui::Separator();
+
+			app->frame();
+
+			draw_to_screen(inp.wnd_size_px);
+			end_imgui(inp.wnd_size_px);
+
+			save->end_frame();
+
+			app->swap_buffers();
+
+			app->dt = app->dt_measure.frame();
+		}
+		static void glfw_resize_or_move_event (GLFWwindow* window) {
+			auto* app = ((Application*)glfwGetWindowUserPointer(window));
+
+			if (app->stop_recursion) return;
+			app->stop_recursion = true;
+
+			run_frame(window);
+
+			app->stop_recursion = false;
+		}
+	
 	public:
 
+		Input				inp;
+
+		flt					dt;
+		int					frame_i;
+		
 		void set_fullscreen (bool want_fullscreen) {
 			if (!is_fullscreen && !want_fullscreen) return; // going from windowed to windowed
 
@@ -333,7 +465,7 @@ namespace engine {
 			glfwTerminate();
 		}
 
-		~Display () {
+		~Application () {
 			if (window)
 				close();
 		}
@@ -390,144 +522,8 @@ namespace engine {
 			glfwSwapBuffers(window);
 		}
 
-		//
-		typedef void (* frame_proc)(Display& dsp, Input& inp, f32 dt);
-
-		frame_proc frame;
-		Delta_Time_Measure dt_measure;
-		bool stop_recursion = false;
-		flt dt;
-		int frame_i;
-
-		static void run_frame (GLFWwindow* window) {
-			auto* dsp = ((Display*)glfwGetWindowUserPointer(window));
+		void run () {
 			
-			shader_manager.poll_reload_shaders(dsp->frame_i);
-
-			auto& inp = dsp->poll_input(dsp->inp.gui_input_enabled);
-
-			if (inp.went_down(GLFW_KEY_F11))
-				dsp->toggle_fullscreen();
-
-			bool trigger_load = inp.alt_combo('L') || dsp->frame_i == 0;
-			bool trigger_save = inp.alt_combo('S');
-			save = save_file("saves/save.xml", trigger_load, trigger_save);
-
-			static bool imgui_enabled = true;
-			if (inp.went_down(GLFW_KEY_F2))
-				imgui_enabled = !imgui_enabled;
-			if (inp.went_down(GLFW_KEY_F1))
-				inp.gui_input_enabled = !inp.gui_input_enabled;
-
-			begin_imgui(&inp, dsp->dt, inp.gui_input_enabled, imgui_enabled);
-
-			{
-				flt dt = dsp->dt;
-				flt fps = 1.0f / dt;
-
-				static Exp_Moving_Avg dt_avg  (1.0f / 60, 0.2f);
-				static Exp_Moving_Avg fps_avg (60, 0.2f);
-
-				if (dsp->frame_i > 0) { // fps is inf, dt is 0 on frame 0
-					dt_avg.update(dt, dt);
-					fps_avg.update(fps, dt);
-				}
-				
-				ImGui::Text("%8.3f fps  %8.3f ms (%8.3f)", fps_avg.value, dt_avg.value * 1000, dt * 1000);
-
-				{
-					static flt values_per_pixel = 0.5f;
-					static flt plot_height = 50;
-					static bool heartbeat_style = false;
-
-					flt w = ImGui::GetContentRegionAvailWidth();
-
-					int value_count = max(1, (int)round(w * values_per_pixel));
-
-					static std::vector<flt> values (value_count, 0);
-					static int cur_value = 0;
-
-					values[cur_value] = dt * 1000;
-
-					cur_value = (cur_value +1) % (int)values.size();
-
-					if ((int)values.size() != value_count) {
-						int delta = value_count -(int)values.size();
-						
-						if (delta < 0) {
-							int values_erasable_at_end = (int)values.size() -cur_value;
-
-							int values_to_erase = -delta;
-
-							int erase_end = min(values_to_erase, values_erasable_at_end);
-							int erase_begin = values_to_erase -erase_end;
-
-							values.erase(values.begin() +cur_value, values.begin() +cur_value +erase_end);
-							values.erase(values.begin(), values.begin() +erase_begin); // wrap around the erase
-
-							cur_value -= erase_begin;
-
-							cur_value = cur_value % (int)values.size(); // since we erased, cur_value can happen to be at one past the end again
-
-						} else {
-							values.insert(values.begin() +cur_value, delta, 0);
-						}
-
-					}
-				
-					ImGui::PlotLines("##frametime", values.data(), (int)values.size(), heartbeat_style ? 0 : cur_value, "frametime [ms]", 0, 1.0f / 60 * 2.5f * 1000, ImVec2(w, plot_height));
-					if (ImGui::BeginPopupContextItem("frametime plot popup")) {
-						ImGui::SliderFloat("values_per_pixel", &values_per_pixel, 0, 1.5f);
-						ImGui::SliderFloat("plot_height", &plot_height, 0, 200);
-						ImGui::Checkbox("heartbeat_style", &heartbeat_style);
-						ImGui::EndPopup();
-					}
-				}
-
-				dsp->dt = max(dsp->dt, 1.0f / 20); // prevent big timestep when paused or frozen for whatever reason
-			}
-
-			//if (	(inp.buttons[GLFW_MOUSE_BUTTON_RIGHT].went_down && !ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow)) // unfocus imgui windows when right clicking outside of them
-			//	|| dsp->frame_i < 3 || !imgui_enabled || !inp.gui_input_enabled ) { // imgui steals focus on the third frame for some reason
-			//	ImGui::ClearActiveID();
-			//	//ImGui::FocusWindow(NULL);
-			//}
-
-			{
-				static bool ShowDemoWindow = false;
-				imgui::Checkbox("ShowDemoWindow", &ShowDemoWindow);
-				if (ShowDemoWindow) {
-					imgui::ShowDemoWindow(&ShowDemoWindow);
-				}
-			}
-
-			imgui::Separator();
-
-			dsp->frame(*dsp, inp, dsp->dt);
-
-			draw_to_screen(inp.wnd_size_px);
-			end_imgui(inp.wnd_size_px);
-
-			save->end_frame();
-
-			dsp->swap_buffers();
-
-			dsp->dt = dsp->dt_measure.frame();
-		}
-		static void glfw_resize_or_move_event (GLFWwindow* window) {
-			auto* dsp = ((Display*)glfwGetWindowUserPointer(window));
-			
-			if (dsp->stop_recursion) return;
-			dsp->stop_recursion = true;
-			
-			run_frame(window);
-			
-			dsp->stop_recursion = false;
-		}
-
-		void run (frame_proc frame) {
-			this->frame = frame;
-
 			// This still pauses when you move the window by clicking on the titlebar, but then don't move the mouse
 			glfwSetFramebufferSizeCallback(	window, [] (GLFWwindow* window, int x, int y) { glfw_resize_or_move_event(window); } );
 			glfwSetWindowPosCallback(		window, [] (GLFWwindow* window, int x, int y) { glfw_resize_or_move_event(window); } );
@@ -543,13 +539,8 @@ namespace engine {
 					break;
 			}
 		}
+
+		virtual void frame () = 0;
 	};
 
-	void run_display (Display::frame_proc frame, std::string const& title, iv2 default_size=iv2(1280,720), e_vsync_mode vsync_mode=VSYNC_ON) {
-
-		engine::Display dsp;
-		dsp.open(title, default_size, vsync_mode);
-
-		dsp.run(frame);
-	}
 }

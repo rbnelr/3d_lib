@@ -50,27 +50,27 @@ void game (Input& inp) {
 
 int main () {
 	
-	engine::Display dsp;
-	dsp.open(MSVC_PROJECT_NAME);
+	engine::Application app;
+	app.open(MSVC_PROJECT_NAME);
 
 	Delta_Time_Measure dt_measure;
 	flt dt = dt_measure.begin();
 
 	for (int frame_i=0;; ++frame_i) {
-		auto inp = dsp.poll_input();
-		if (dsp.wants_to_close()) break;
+		app.poll_input();
+		if (app.wants_to_close()) break;
 
-		if (inp.went_down(GLFW_KEY_F11))
-			dsp.toggle_fullscreen();
+		if (app.inp.went_down(GLFW_KEY_F11))
+			app.toggle_fullscreen();
 
-		engine::begin_imgui(&inp, dt);
+		engine::begin_imgui(&app.inp, dt);
 
-		game(inp);
+		game(app.inp);
 
-		engine::draw_to_screen(inp.wnd_size_px);
-		engine::end_imgui(inp.wnd_size_px);
+		engine::draw_to_screen(app.inp.wnd_size_px);
+		engine::end_imgui(app.inp.wnd_size_px);
 
-		dsp.swap_buffers();
+		app.swap_buffers();
 
 		dt = dt_measure.frame();
 	}

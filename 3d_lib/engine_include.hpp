@@ -51,14 +51,6 @@ namespace engine {
 	using namespace colors;
 	using namespace string;
 
-	constexpr srgba8 black = 0;
-	constexpr lrgba lblack = 0;
-
-	constexpr srgba8 white = 255;
-	constexpr lrgba lwhite = 1;
-
-	constexpr v3	normalmap_identity = v3(0.5f,0.5f,1);
-
 	struct Screen_Rect {
 		iv2		offs_px;
 		iv2		size_px;
@@ -97,11 +89,16 @@ namespace engine {
 			return mouse_cursor_pos_px() / (v2)wnd_size_px * 2 -1;
 		}
 
-		v2 mouse_cursor_pos_px (Screen_Rect rect) { // bottom up, pixel center
+		v2 mouse_cursor_pos_px (Screen_Rect const& rect) { // bottom up, pixel center
 			return mouse_cursor_pos_px() -(v2)rect.offs_px;
 		}
-		v2 mouse_cursor_pos_clip (Screen_Rect rect) { // bottom up, pixel center
+		v2 mouse_cursor_pos_clip (Screen_Rect const& rect) { // bottom up, pixel center
 			return mouse_cursor_pos_px(rect) / (v2)rect.size_px * 2 -1;
+		}
+
+		bool mouse_curson_in (Screen_Rect const& rect) {
+			v2 pos = mouse_cursor_pos_px() -(v2)rect.offs_px;
+			return all(pos >= 0 && pos < (v2)rect.size_px);
 		}
 
 		struct Mousewheel {

@@ -18,28 +18,28 @@ void DEBUG (vec3 v) {	dbg_output_set = true; frag_col = vec4(v,1); }
 void DEBUG (vec4 v) {	dbg_output_set = true; frag_col = v; }
 
 bool dbg_left () {
-	if (gl_FragCoord.x == common_mcursor_pos.x)
+	if (gl_FragCoord.x == common_mcursor_pos_window.x)
 		DEBUG(0);
-	return gl_FragCoord.x < common_mcursor_pos.x;
+	return gl_FragCoord.x < common_mcursor_pos_window.x;
 }
 bool dbg_right () {
-	if (gl_FragCoord.x == common_mcursor_pos.x)
+	if (gl_FragCoord.x == common_mcursor_pos_window.x)
 		DEBUG(0);
-	return gl_FragCoord.x > common_mcursor_pos.x;
+	return gl_FragCoord.x > common_mcursor_pos_window.x;
 }
 bool dbg_down () {
-	if (gl_FragCoord.y == common_mcursor_pos.y)
+	if (gl_FragCoord.y == common_mcursor_pos_window.y)
 		DEBUG(0);
-	return gl_FragCoord.y < common_mcursor_pos.y;
+	return gl_FragCoord.y < common_mcursor_pos_window.y;
 }
 bool dbg_up () {
-	if (gl_FragCoord.y == common_mcursor_pos.y)
+	if (gl_FragCoord.y == common_mcursor_pos_window.y)
 		DEBUG(0);
-	return gl_FragCoord.y > common_mcursor_pos.y;
+	return gl_FragCoord.y > common_mcursor_pos_window.y;
 }
 
-vec2 mcursor () {
-	return common_mcursor_pos / common_viewport_size;
+vec2 viewport_uv () {
+	return (gl_FragCoord.xy -common_viewport_offset) / common_viewport_size;
 }
 
 #if WIREFRAME

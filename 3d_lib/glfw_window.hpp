@@ -188,15 +188,23 @@ namespace engine {
 
 		static void run_frame (GLFWwindow* window) {
 			auto* app = ((Application*)glfwGetWindowUserPointer(window));
+			
+			if (app->stop_recursion) return;
+			app->stop_recursion = true;
 
-			shader_manager.poll_reload_shaders(app->frame_i);
+			app->run_frame();
 
-			auto& inp = app->poll_input(app->inp.gui_input_enabled);
+			app->stop_recursion = false;
+		}
+		void run_frame () {
+			shader_manager.poll_reload_shaders(frame_i);
+
+			auto& inp = poll_input(this->inp.gui_input_enabled);
 
 			if (inp.went_down(GLFW_KEY_F11))
-				app->toggle_fullscreen();
+				toggle_fullscreen();
 
-			bool trigger_load = inp.alt_combo('L') || app->frame_i == 0;
+			bool trigger_load = inp.alt_combo('L') || frame_i == 0;
 			bool trigger_save = inp.alt_combo('S');
 			save = save_file("saves/save.xml", trigger_load, trigger_save);
 
@@ -206,16 +214,15 @@ namespace engine {
 			if (inp.went_down(GLFW_KEY_F1))
 				inp.gui_input_enabled = !inp.gui_input_enabled;
 
-			begin_imgui(&inp, app->dt, inp.gui_input_enabled, imgui_enabled);
+			begin_imgui(&inp, dt, inp.gui_input_enabled, imgui_enabled);
 
 			{
-				flt dt = app->dt;
 				flt fps = 1.0f / dt;
 
 				static Exp_Moving_Avg dt_avg  (1.0f / 60, 0.2f);
 				static Exp_Moving_Avg fps_avg (60, 0.2f);
 
-				if (app->frame_i > 0) { // fps is inf, dt is 0 on frame 0
+				if (frame_i > 0) { // fps is inf, dt is 0 on frame 0
 					dt_avg.update(dt, dt);
 					fps_avg.update(fps, dt);
 				}
@@ -271,7 +278,7 @@ namespace engine {
 					}
 				}
 
-				app->dt = min(app->dt, 1.0f / 20); // prevent big timestep when paused or frozen for whatever reason
+				dt = min(dt, 1.0f / 20); // prevent big timestep when paused or frozen for whatever reason
 			}
 
 			//if (	(inp.buttons[GLFW_MOUSE_BUTTON_RIGHT].went_down && !ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow)) // unfocus imgui windows when right clicking outside of them
@@ -280,6 +287,18 @@ namespace engine {
 			//	//ImGui::FocusWindow(NULL);
 			//}
 
+			{
+				bool vsync = vsync_mode == VSYNC_ON;
+				if (imgui::Checkbox("vsync", &vsync))
+					set_vsync(vsync ? VSYNC_ON : VSYNC_OFF);
+			}
+			imgui::SameLine();
+			{
+				bool fullscreen = is_fullscreen;
+				if (imgui::Checkbox("fullscreen", &fullscreen))
+					set_fullscreen(fullscreen);
+			}
+			imgui::SameLine();
 			{
 				static bool ShowDemoWindow = false;
 				imgui::Checkbox("ShowDemoWindow", &ShowDemoWindow);
@@ -290,26 +309,21 @@ namespace engine {
 
 			imgui::Separator();
 
-			app->frame();
+			frame();
 
 			draw_to_screen(inp.wnd_size_px);
 			end_imgui(inp.wnd_size_px);
 
 			save->end_frame();
 
-			app->swap_buffers();
+			swap_buffers();
 
-			app->dt = app->dt_measure.frame();
+			dt = dt_measure.frame();
 		}
 		static void glfw_resize_or_move_event (GLFWwindow* window) {
 			auto* app = ((Application*)glfwGetWindowUserPointer(window));
 
-			if (app->stop_recursion) return;
-			app->stop_recursion = true;
-
 			run_frame(window);
-
-			app->stop_recursion = false;
 		}
 	
 	public:
@@ -487,11 +501,14 @@ namespace engine {
 			glfwPollEvents();
 
 			glfwGetFramebufferSize(window, &inp.wnd_size_px.x,&inp.wnd_size_px.y);
+			set_shared_uniform("common", "common_window_size", (v2)inp.wnd_size_px);
 
 			{
 				double x,y;
 				glfwGetCursorPos(window, &x, &y);
 				inp.mousecursor.pos_screen = v2((flt)x,(flt)y);
+
+				set_shared_uniform("common", "mcursor_pos_window", (v2)inp.wnd_size_px);
 			}
 
 			inp.reset_blocked();

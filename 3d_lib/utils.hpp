@@ -38,8 +38,8 @@ namespace engine {
 	#undef near
 
 	m4 calc_orthographic_matrix (v2 size, flt near=-1, flt far=100) {
-		flt x = 1.0f / size.x;
-		flt y = 1.0f / size.y;
+		flt x = 1.0f / (size.x / 2);
+		flt y = 1.0f / (size.y / 2);
 
 		flt a = 1.0f / (far -near);
 		flt b = near * a;

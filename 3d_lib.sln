@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.24720.0
+# Visual Studio 15
+VisualStudioVersion = 15.0.27703.2026
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "3d_lib", "3d_lib\3d_lib.vcxproj", "{DEB3C6CE-3D65-4EE8-9882-1E126FDD33EF}"
 EndProject
@@ -10,7 +10,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "z_example_01_manual_frame_l
 		{DEB3C6CE-3D65-4EE8-9882-1E126FDD33EF} = {DEB3C6CE-3D65-4EE8-9882-1E126FDD33EF}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "z_example_02_frame_callback", "z_example_02_frame_callback\z_example_02_frame_callback.vcxproj", "{B9801538-F404-4010-AB6C-C9037A9E3E12}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "z_example_02_app_as_class", "z_example_02_frame_callback\z_example_02_frame_callback.vcxproj", "{B9801538-F404-4010-AB6C-C9037A9E3E12}"
 	ProjectSection(ProjectDependencies) = postProject
 		{DEB3C6CE-3D65-4EE8-9882-1E126FDD33EF} = {DEB3C6CE-3D65-4EE8-9882-1E126FDD33EF}
 	EndProjectSection
@@ -43,7 +43,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mylibs", "mylibs\mylibs.vcx
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "snake", "snake\snake.vcxproj", "{DCB32657-31BC-4270-87A8-38E00CF78B97}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "marder_stochastik", "marder_stochastik\marder_stochastik.vcxproj", "{D9EB39C0-85C4-4409-A94A-E0F81E61ABBD}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{36CB4683-9A7D-4B92-9CB1-9DC482ED8FD2}"
+	ProjectSection(SolutionItems) = preProject
+		TODO.txt = TODO.txt
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -141,14 +144,6 @@ Global
 		{DCB32657-31BC-4270-87A8-38E00CF78B97}.Release|x64.Build.0 = Release|x64
 		{DCB32657-31BC-4270-87A8-38E00CF78B97}.Release|x86.ActiveCfg = Release|Win32
 		{DCB32657-31BC-4270-87A8-38E00CF78B97}.Release|x86.Build.0 = Release|Win32
-		{D9EB39C0-85C4-4409-A94A-E0F81E61ABBD}.Debug|x64.ActiveCfg = Debug|x64
-		{D9EB39C0-85C4-4409-A94A-E0F81E61ABBD}.Debug|x64.Build.0 = Debug|x64
-		{D9EB39C0-85C4-4409-A94A-E0F81E61ABBD}.Debug|x86.ActiveCfg = Debug|Win32
-		{D9EB39C0-85C4-4409-A94A-E0F81E61ABBD}.Debug|x86.Build.0 = Debug|Win32
-		{D9EB39C0-85C4-4409-A94A-E0F81E61ABBD}.Release|x64.ActiveCfg = Release|x64
-		{D9EB39C0-85C4-4409-A94A-E0F81E61ABBD}.Release|x64.Build.0 = Release|x64
-		{D9EB39C0-85C4-4409-A94A-E0F81E61ABBD}.Release|x86.ActiveCfg = Release|Win32
-		{D9EB39C0-85C4-4409-A94A-E0F81E61ABBD}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -26,6 +26,7 @@
     <ProjectGuid>{B9801538-F404-4010-AB6C-C9037A9E3E12}</ProjectGuid>
     <RootNamespace>zexample02framecallback</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
+    <ProjectName>z_example_02_app_as_class</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">

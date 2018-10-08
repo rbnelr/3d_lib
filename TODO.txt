@@ -1,0 +1,15 @@
+
+*Fix all project to new version of 3d_lib
+ 
+ text rendering as SDF
+ 
+ useful text api
+ 
+ snake start/lose/win screen + start/respawn button (or with any key)
+ 
+ experiment further in upscaler
+ 
+ minecraft map in smoothvoxel
+ -LOD for far view distance
+ -digging in voxel
+ 

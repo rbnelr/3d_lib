@@ -9,8 +9,8 @@ class Camera2D {
 public:
 	//// 
 	v2		pos_world = 0;
-	flt		rot = 0;
 	v2		size_world = 1;
+	flt		rot = 0;
 
 	////
 	bool	black_bars = false; // false
@@ -27,6 +27,10 @@ public:
 	flt		rot_vel = deg(90);
 	flt		zoom_log_speed = 0.1f;
 
+	Camera2D () {}
+	Camera2D (v2 pos_world, fv2 size_world=1, flt rot=0, bool controllable=true, bool black_bars=false):
+		pos_world{pos_world}, size_world{size_world}, rot{rot}, controllable{controllable}, black_bars{black_bars} {}
+
 private:
 	bool	dragging = false;
 	v2		grab_pos_world;
@@ -41,6 +45,10 @@ public:
 	}
 	hm calc_world_to_cam () {
 		return hm(rotate2(-rot)) * translateH(-v3(pos_world,0));
+	}
+
+	static Camera2D arcade_style_cam (v2 size_world) {
+		return Camera2D((v2)size_world / 2, (v2)size_world, 0, false, true);
 	}
 
 private:
@@ -149,7 +157,7 @@ public:
 		return subrect;
 	}
 
-	void draw_to (Input& inp, flt dt) {
+	void draw_to () {
 		Screen_Rect subrect = get_subrect();
 
 		draw_to_screen(subrect);

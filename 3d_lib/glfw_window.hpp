@@ -189,7 +189,7 @@ namespace engine {
 		static void run_frame (GLFWwindow* window) {
 			auto* app = ((Application*)glfwGetWindowUserPointer(window));
 			
-			if (app->stop_recursion) return;
+			if (app->stop_recursion) return; // TODO: somehow only set app->stop_recursion after poll_input, but before anything recurse unsafe, or else this is pointless
 			app->stop_recursion = true;
 
 			app->run_frame();

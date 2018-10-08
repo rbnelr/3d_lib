@@ -1,5 +1,7 @@
 
 *Fix all project to new version of 3d_lib
+
+ fix recursive rendering in glfw_window.hpp (its broken currently, simply does not render on resize)
  
  text rendering as SDF
  

@@ -1,7 +1,13 @@
 
 // common uniforms
+uniform	vec2	common_window_size;
+uniform	vec2	common_mcursor_pos_window;
+uniform	vec2	common_viewport_offset;
 uniform	vec2	common_viewport_size;
-uniform	vec2	common_mcursor_pos;
+
+vec2 mcursor () { // [0,1] in viewport
+	return (common_mcursor_pos_window -common_viewport_offset) / common_viewport_size;
+}
 
 // srgb conversions
 vec3 to_srgb (vec3 linear) {

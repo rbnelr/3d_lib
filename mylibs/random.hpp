@@ -14,58 +14,50 @@ namespace random {
 	using namespace vector;
 	using namespace float_precision;
 
-	struct Uniform_Int {
-		std::default_random_engine			generator;
-		
-		Uniform_Int (uint seed) {
-			generator.seed(seed);
-		}
-		Uniform_Int (): Uniform_Int{ (uint)time(NULL) } {}
+	std::default_random_engine global_generator = std::default_random_engine ( (uint)time(NULL) );
 
-		int roll (int min, int max) {
-			assert(max > min);
+	int uniform (std::default_random_engine& generator, int min, int max) {
+		assert(max > min);
 
-			std::uniform_int_distribution<int>	distribution (min, max -1);
+		std::uniform_int_distribution<int>	distribution (min, max -1);
 
-			return distribution(generator);
-		}
-		int roll (int max) {
-			return roll(0, max);
-		}
+		return distribution(generator);
+	}
 
-		iv2 roll (iv2 min, iv2 max) {
-			return iv2(	roll(min.x, max.x),
-						roll(min.y, max.y) );
-		}
-	};
+	int uniform (int min, int max) {
+		return uniform(global_generator, min, max);
+	}
+	int uniform (int max) {
+		return uniform(0, max);
+	}
 
-	struct Uniform_Flt {
-		std::default_random_engine			generator;
+	iv2 uniform (iv2 min, iv2 max) {
+		return iv2(	uniform(min.x, max.x),
+					uniform(min.y, max.y) );
+	}
 
-		Uniform_Flt (uint seed) {
-			generator.seed(seed);
-		}
-		Uniform_Flt (): Uniform_Flt{ (uint)time(NULL) } {}
+	flt uniform (std::default_random_engine& generator, flt min, flt max) {
+		assert(max > min);
 
-		flt roll (flt min, flt max) {
-			assert(max > min);
+		std::uniform_real_distribution<flt>	distribution (min, max);
 
-			std::uniform_real_distribution<flt>	distribution (min, max);
+		return distribution(generator);
+	}
 
-			return distribution(generator);
-		}
-		flt roll (flt max) {
-			return roll(0, max);
-		}
+	flt uniform (flt min, flt max) {
+		return uniform(global_generator, min, max);
+	}
+	flt uniform (flt max) {
+		return uniform(0.0f, max);
+	}
 
-		v2 roll (v2 min, v2 max) {
-			return v2(	roll(min.x, max.x),
-						roll(min.y, max.y) );
-		}
-		v3 roll (v3 min, v3 max) {
-			return v3(	roll(min.x, max.x),
-						roll(min.y, max.y),
-						roll(min.z, max.z) );
-		}
-	};
+	v2 uniform (v2 min, v2 max) {
+		return v2(	uniform(min.x, max.x),
+					uniform(min.y, max.y) );
+	}
+	v3 uniform (v3 min, v3 max) {
+		return v3(	uniform(min.x, max.x),
+					uniform(min.y, max.y),
+					uniform(min.z, max.z) );
+	}
 }

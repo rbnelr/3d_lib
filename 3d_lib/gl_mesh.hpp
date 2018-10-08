@@ -486,7 +486,7 @@ template <typename VERT, typename INDX=u16, typename GEN_VERT> Cpu_Mesh<VERT,IND
 struct Default_Vertex_2d {
 	v2		pos_model;
 	v2		uv				= 0.5f;
-	lrgba	col_lrgba		= white.to_lrgb();
+	lrgba	col_lrgba		= lrgba(white, 1);
 
 	static const Vertex_Layout layout;
 };
@@ -501,7 +501,7 @@ struct Default_Vertex_3d {
 	v3		normal_model	= v3(0, 0,+1);
 	v4		tangent_model	= v4(0,+1, 0,+1);
 	v2		uv				= 0.5f;
-	lrgba	col_lrgba		= white.to_lrgb();
+	lrgba	col_lrgba		= lrgba(white, 1);
 
 	static const Vertex_Layout layout;
 };

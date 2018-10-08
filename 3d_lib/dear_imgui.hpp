@@ -12,6 +12,13 @@ namespace imgui = ImGui;
 #include <algorithm>
 
 namespace ImGui {
+	IMGUI_API bool DragAngle (cstr label, float* v, float v_speed=deg(5)) {
+		float deg = to_deg(*v);
+		auto res = DragFloat(label, &deg, v_speed, 0,0, "%.1f deg");
+		*v = to_rad(deg);
+		return res;
+	}
+
 	IMGUI_API void Value (const char* prefix, engine::fv2 v) {
 		Text("%s: %.2f, %.2f", prefix, v.x,v.y);
 	}

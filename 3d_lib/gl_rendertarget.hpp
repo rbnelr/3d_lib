@@ -7,7 +7,7 @@ namespace engine {
 //
 
 class FBO {
-	friend void draw_to_texture (FBO const& fbo, iv2 texture_size);
+	friend void draw_to_texture (FBO const&, Screen_Rect const&);
 
 	MOVE_ONLY_CLASS(FBO)
 
@@ -95,30 +95,23 @@ FBO_Cube create_fbo (TextureCube const& color_target, iv2 size_px, int mip=0) {
 	return FBO_Cube::create(color_target, size_px, mip);
 }
 
-void draw_to_screen (iv2 screen_size) {
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+void draw_to_screen (GLuint fbo, Screen_Rect const& viewport) {
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 
-	glViewport(0,0, screen_size.x,screen_size.y);
-	glScissor( 0,0, screen_size.x,screen_size.y);
+	glViewport(viewport.offs_px.x,viewport.offs_px.y, viewport.size_px.x,viewport.size_px.y);
+	glScissor( viewport.offs_px.x,viewport.offs_px.y, viewport.size_px.x,viewport.size_px.y);
 
-	set_shared_uniform("common", "viewport_size", (v2)screen_size);
+	set_shared_uniform("common", "viewport_offset",	(v2)viewport.offs_px);
+	set_shared_uniform("common", "viewport_size",	(v2)viewport.size_px);
 }
-void draw_to_screen (iv2 viewport_offs, iv2 viewport_size) {
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-	glViewport(viewport_offs.x,viewport_offs.y, viewport_size.x,viewport_size.y);
-	glScissor( viewport_offs.x,viewport_offs.y, viewport_size.x,viewport_size.y);
-
-	//set_shared_uniform("common", "viewport_size", (v2)screen_size); // need to test this with viewport_offs
+void draw_to_screen (iv2 viewport_size) {
+	draw_to_screen(0, { 0, viewport_size });
 }
-void draw_to_texture (FBO const& fbo, iv2 texture_size) {
-
-	glBindFramebuffer(GL_FRAMEBUFFER, fbo.handle);
-
-	glViewport(0,0, texture_size.x,texture_size.y);
-	glScissor( 0,0, texture_size.x,texture_size.y);
-
-	set_shared_uniform("common", "viewport_size", (v2)texture_size);
+void draw_to_screen (Screen_Rect const& viewport) {
+	draw_to_screen(0, viewport);
+}
+void draw_to_texture (FBO const& fbo, Screen_Rect const& viewport) {
+	draw_to_screen(fbo.handle, viewport);
 }
 
 /*

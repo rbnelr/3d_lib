@@ -83,4 +83,9 @@ namespace colors {
 
 		return srgb;
 	}
+
+	constexpr lrgb black = 0;
+	constexpr lrgb white = 1;
+
+	constexpr lrgb normalmap_identity = lrgb(0.5f,0.5f,1);
 }

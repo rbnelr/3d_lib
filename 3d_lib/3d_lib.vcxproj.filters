@@ -7,6 +7,9 @@
     <Filter Include="src">
       <UniqueIdentifier>{03cdb610-f01c-47a1-b3b2-7fa3a013a9d5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="shaders">
+      <UniqueIdentifier>{98691415-af98-4756-a5b3-9c17e10b67dc}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="engine_include.hpp">
@@ -62,5 +65,16 @@
     <ClCompile Include="main.cpp">
       <Filter>src</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\common.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\common.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\common.vert">
+      <Filter>shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

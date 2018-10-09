@@ -400,22 +400,28 @@ namespace engine {
 	class Application : public Window {
 
 		Delta_Time_Measure dt_measure;
-		bool stop_recursion = false;
+		
+		int _allow_run_frame_recursion = 0;
 
-		static void run_frame (GLFWwindow* window) {
+		static void glfw_resize_or_move_event (GLFWwindow* window) {
 			auto* app = ((Application*)glfwGetWindowUserPointer(window));
 
-			if (app->stop_recursion) return;
-			app->stop_recursion = true;
+			if (app->_allow_run_frame_recursion != 1)
+				return;
 
 			app->run_frame();
-
-			app->stop_recursion = false;
 		}
 		void run_frame () {
+			
 			shader_manager.poll_reload_shaders(frame_i);
 
-			auto& inp = poll_input(this->inp.gui_input_enabled);
+			{
+				_allow_run_frame_recursion++;
+
+				poll_input(this->inp.gui_input_enabled);
+
+				_allow_run_frame_recursion--;
+			}
 
 			if (inp.went_down(GLFW_KEY_F11))
 				toggle_fullscreen();
@@ -536,11 +542,6 @@ namespace engine {
 
 			dt = dt_measure.frame();
 		}
-		static void glfw_resize_or_move_event (GLFWwindow* window) {
-			auto* app = ((Application*)glfwGetWindowUserPointer(window));
-
-			run_frame(window);
-		}
 
 	public:
 		
@@ -560,7 +561,7 @@ namespace engine {
 
 			for (frame_i=0;; ++frame_i) {
 
-				run_frame(window);
+				run_frame();
 
 				if (wants_to_close())
 					break;

@@ -357,14 +357,14 @@ namespace engine {
 			glfwPollEvents();
 
 			glfwGetFramebufferSize(window, &inp.wnd_size_px.x,&inp.wnd_size_px.y);
-			set_shared_uniform("common", "common_window_size", (v2)inp.wnd_size_px);
+			set_shared_uniform("common", "window_size", (v2)inp.wnd_size_px);
 
 			{
 				double x,y;
 				glfwGetCursorPos(window, &x, &y);
 				inp.mousecursor.pos_screen = v2((flt)x,(flt)y);
 
-				set_shared_uniform("common", "mcursor_pos_window", (v2)inp.wnd_size_px);
+				set_shared_uniform("common", "mcursor_pos_window", inp.mouse_cursor_pos_px());
 			}
 
 			inp.reset_blocked();

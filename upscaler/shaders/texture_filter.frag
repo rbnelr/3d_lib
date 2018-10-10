@@ -75,12 +75,10 @@ vec4 filter () {
 	vec4 rgba = texture(tex, vs_uv).rgba;
 	vec3 col = rgba.rgb;
 	float alpha = rgba.a;
-	
-	DEBUG(vec4(1,0,0,1));
 
 	if (dbg_right())
 		return rgba;
-
+	
 	vec2 gradient = calc_gradient_normal(vs_uv);
 	return vec4(visualize(gradient), 1);
 

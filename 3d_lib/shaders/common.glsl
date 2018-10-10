@@ -1,10 +1,13 @@
 
 // common uniforms
 uniform	vec2	common_window_size;
-uniform	vec2	common_mcursor_pos_window;
+uniform	vec2	common_mcursor_pos_window; // pixel centers (alwayd +0.5)
 uniform	vec2	common_viewport_offset;
 uniform	vec2	common_viewport_size;
 
+vec2 mcursor_window () { // [0,1] in viewport
+	return (common_mcursor_pos_window) / common_window_size;
+}
 vec2 mcursor () { // [0,1] in viewport
 	return (common_mcursor_pos_window -common_viewport_offset) / common_viewport_size;
 }

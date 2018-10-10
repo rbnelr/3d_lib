@@ -171,11 +171,10 @@ public:
 		}
 	}
 
-	bool poll_file_changes_ignore_removed (std::vector<std::string>* changed_files=nullptr) {
+	bool poll_file_changes_ignore_removed (std::vector<std::string>* changed_files=nullptr) { // appends to changed_files
 		std::vector<File_Change> changes;
 		bool res = poll_file_changes(&changes);
 
-		changed_files->clear();
 		for (auto& c : changes)
 			if (c.change != FILE_REMOVED && !contains(*changed_files, c.filepath)) // do not report a file as changed twice
 				changed_files->push_back(c.filepath);

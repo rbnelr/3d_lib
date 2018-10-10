@@ -76,6 +76,8 @@ vec4 filter () {
 	vec3 col = rgba.rgb;
 	float alpha = rgba.a;
 	
+	DEBUG(vec4(1,0,0,1));
+
 	if (dbg_right())
 		return rgba;
 

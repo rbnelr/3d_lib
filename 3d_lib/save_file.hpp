@@ -277,14 +277,14 @@ public:
 		
 		if (new_type == Value::STRUCT || new_type == Value::ARRAY) {
 			if (str.size() != 0) {
-				fprintf(stderr, "Stray value \"%s\" in %s node!\n", str.c_str(), typename_(new_type));
+				errprint("Stray value \"%s\" in %s node!\n", str.c_str(), typename_(new_type));
 				return false;
 			}
 			return true; // no value to load
 		} else {
 			
 			if (!parse(new_type, new_mode, str, val)) {
-				fprintf(stderr, "Could not parse \"%s\" into %s!\n", str.c_str(), typename_(new_type));
+				errprint("Could not parse \"%s\" into %s!\n", str.c_str(), typename_(new_type));
 				return false;
 			}
 			return true;
@@ -384,19 +384,19 @@ struct Save {
 	void begin_frame () {
 		if (trigger_load) {
 			if (!from_xml()) {
-				fprintf(stderr, "Save: Could load from xml!\n");
+				errprint("Save: Could load from xml!\n");
 				trigger_load = false; // abort loading
 			}
 		}
 	}
 	void end_frame () {
 		if (cur_parent)
-			fprintf(stderr, "Save: not few end() calls!\n");
+			errprint("Save: not few end() calls!\n");
 		cur_parent = nullptr;
 
 		if (trigger_save)
 			if (!to_xml())
-				fprintf(stderr, "Save: Could not save to xml!\n");
+				errprint("Save: Could not save to xml!\n");
 	}
 
 	//
@@ -497,7 +497,7 @@ struct Save {
 	}
 	void end () {
 		if (!cur_parent)
-			fprintf(stderr, "Save: too many end() calls!\n");
+			errprint("Save: too many end() calls!\n");
 		else
 			cur_parent = cur_parent->parent;
 	}
@@ -627,7 +627,7 @@ struct Save {
 		try {
 			xml_doc.parse<0>(&text[0]);
 		} catch (rapidxml::parse_error e) {
-			fprintf(stderr, "rapidxml: \"%s\"\n", e.what());
+			errprint("rapidxml: \"%s\"\n", e.what());
 			return false;
 		}
 

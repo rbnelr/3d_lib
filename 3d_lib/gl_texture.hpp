@@ -384,7 +384,7 @@ void* get_image2d_file_pixels (std::string const& filepath, Texture::Options o, 
 
 		pixels = stbi_load(filepath.c_str(), &size_px->x,&size_px->y, &got_channels, channels);
 		if (!pixels) {
-			fprintf(stderr, "Texture \"%s\" could not be loaded!\n", filepath.c_str());
+			errprint("Texture \"%s\" could not be loaded!\n", filepath.c_str());
 			return nullptr;
 		}
 
@@ -395,7 +395,7 @@ void* get_image2d_file_pixels (std::string const& filepath, Texture::Options o, 
 		
 		pixels = stbi_loadf(filepath.c_str(), &size_px->x,&size_px->y, &got_channels, channels);
 		if (!pixels) {
-			fprintf(stderr, "Texture \"%s\" could not be loaded!\n", filepath.c_str());
+			errprint("Texture \"%s\" could not be loaded!\n", filepath.c_str());
 			return nullptr;
 		}
 

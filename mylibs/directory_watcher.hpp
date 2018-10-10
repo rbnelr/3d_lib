@@ -60,7 +60,7 @@ public:
 		ovl.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
 		if (dir == INVALID_HANDLE_VALUE || ovl.hEvent == NULL) {
-			fprintf(stderr, "Directory_Watcher init failed with directory_path=\"%s\" (%s), won't monitor file changes!\n", directory_path.c_str(), dir_err == ERROR_FILE_NOT_FOUND ? "ERROR_FILE_NOT_FOUND" : "unknown error");
+			errprint("Directory_Watcher init failed with directory_path=\"%s\" (%s), won't monitor file changes!\n", directory_path.c_str(), dir_err == ERROR_FILE_NOT_FOUND ? "ERROR_FILE_NOT_FOUND" : "unknown error");
 		}
 
 		do_ReadDirectoryChanges();
@@ -109,7 +109,7 @@ public:
 
 				std::string filepath = wchar_to_utf8(info->FileName);
 
-				#if 1
+				#if 0
 				cstr action_str = nullptr;
 				switch (info->Action) {
 					case FILE_ACTION_ADDED:				action_str = "FILE_ACTION_ADDED             ";	break;

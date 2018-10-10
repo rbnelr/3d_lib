@@ -145,7 +145,7 @@ struct Show_Dir {
 bool file_select (Input& inp, Texture2D** tex, iv2* size_px) {
 	static bool init = true;
 
-	static std::string folder = "J:/upscaler_test";
+	static std::string folder = "images/";//"J:/upscaler_test";
 	bool folder_changed = imgui::InputText_str("folder", &folder) || init;
 	static bool folder_ok = false;
 	imgui::SameLine();	imgui::TextColored(folder_ok ? ImVec4(0,1,0,1) : ImVec4(1,0,0,1), folder_ok ? "OK" : "FAIL!");
@@ -167,7 +167,7 @@ bool file_select (Input& inp, Texture2D** tex, iv2* size_px) {
 	if (!folder_ok)
 		return false;
 
-	static std::string selected_file = "J:/upscaler_test/01.jpg";
+	static std::string selected_file = "images/test.png";//"J:/upscaler_test/01.jpg";
 	bool selected_file_changed = Show_Dir::show(inp, dir, &selected_file);
 	
 	if (selected_file.size() == 0)
@@ -179,16 +179,15 @@ bool file_select (Input& inp, Texture2D** tex, iv2* size_px) {
 }
 
 struct App : public Application {
+
+	Camera2D cam;
+
 	void frame () {
 
 		static bool wireframe_enable = false;
 		save->value("wireframe_enable", &wireframe_enable);
 		imgui::Checkbox("wireframe_enable", &wireframe_enable);
 		engine::set_shared_uniform("wireframe", "enable", wireframe_enable);
-
-		static bool vsync_enable = true;
-		imgui::Checkbox("vsync_enable", &vsync_enable);
-		set_vsync(vsync_enable ? VSYNC_ON : VSYNC_OFF);
 
 		static iv2 size_px;
 		static Texture2D* tex;
@@ -197,8 +196,6 @@ struct App : public Application {
 		//
 		engine::draw_to_screen(inp.wnd_size_px);
 		engine::clear(npp_obsidian::bg_color);
-
-		static Camera2D cam;
 	
 		cam.update(inp, dt);
 		cam.draw_to();

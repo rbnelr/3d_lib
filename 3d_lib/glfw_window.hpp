@@ -62,7 +62,7 @@ namespace engine {
 			case GL_DEBUG_SEVERITY_LOW_ARB:				severity_str = "GL_DEBUG_SEVERITY_LOW_ARB";			break;
 		}
 
-		fprintf(stderr, "OpenGL debug proc: severity: %s src: %s type: %s id: %d  %s\n",
+		errprint("OpenGL debug proc: severity: %s src: %s type: %s id: %d  %s\n",
 				severity_str, src_str, type_str, id, message);
 	}
 
@@ -113,7 +113,7 @@ namespace engine {
 			}
 
 			if (!write_fixed_size_binary_file("saves/window_placement.bin", &win32_windowplacement, sizeof(win32_windowplacement))) {
-				fprintf(stderr, "Could not save window_placement to saves/window_placement.bin, window position and size won't be restored on the next launch of this app.");
+				errprint("Could not save window_placement to saves/window_placement.bin, window position and size won't be restored on the next launch of this app.");
 			}
 		}
 		bool load_window_positioning () {
@@ -121,7 +121,7 @@ namespace engine {
 		}
 
 		static void glfw_error_proc (int err, cstr msg) {
-			fprintf(stderr, "GLFW Error! 0x%x '%s'\n", err, msg);
+			errprint("GLFW Error! 0x%x '%s'\n", err, msg);
 		}
 		static void button_event (GLFWwindow* window, int button, int action, int mods) {
 			Input* inp = &((Window*)glfwGetWindowUserPointer(window))->inp;
@@ -413,8 +413,6 @@ namespace engine {
 		}
 		void run_frame () {
 			
-			shader_manager.poll_reload_shaders(frame_i);
-
 			{
 				_allow_run_frame_recursion++;
 
@@ -528,6 +526,8 @@ namespace engine {
 					imgui::ShowDemoWindow(&ShowDemoWindow);
 				}
 			}
+
+			shader_manager.poll_reload_shaders(frame_i);
 
 			imgui::Separator();
 

@@ -165,7 +165,7 @@ struct Active_Tetromino {
 	void place_tetronimo (Placed_Blocks* blocks) {
 		for (auto& b : blocks_rotated_world) {
 			if (!(blocks->get(b) && blocks->get(b)->type == nullptr))
-				fprintf(stderr, "blocks->get(b) && blocks->get(b)->type == nullptr");
+				errprint("blocks->get(b) && blocks->get(b)->type == nullptr");
 			//assert(blocks->get(b) && blocks->get(b)->type == nullptr);
 			if (blocks->get(b))
 				blocks->get(b)->type = type;

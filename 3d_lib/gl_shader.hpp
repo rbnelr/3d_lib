@@ -1,6 +1,7 @@
 #pragma once
 
 #include "engine_include.hpp"
+#include "dear_imgui.hpp"
 
 #include "mylibs/parse.hpp"
 #include "mylibs/directory_watcher.hpp"
@@ -8,6 +9,8 @@
 #include <unordered_map>
 
 #include "mylibs/containers.hpp"
+
+#include "Imgui_Window_Button.hpp"
 
 namespace engine {
 using namespace simple_file_io;
@@ -74,7 +77,7 @@ struct Shader_Manager {
 		std::string path = find_path(filename);
 
 		if (!load_shader_source(filename, source, file_dependencies)) {
-			fprintf(stderr, "Could load shader source! \"%s\"\n", filename.c_str());
+			errprint("Could load shader source! \"%s\"\n", filename.c_str());
 			return false;
 		}
 
@@ -162,7 +165,7 @@ struct Shader_Manager {
 				if (		include_cmd() );
 				//else if (	other command );
 				else {
-					fprintf(stderr, "unknown or invalid $command in shader \"%s\".\n", filename.c_str());
+					errprint("unknown or invalid $command in shader \"%s\".\n", filename.c_str());
 
 					// ignore invalid line
 					go_to_next_line();
@@ -232,14 +235,13 @@ struct Shader_Manager {
 		}
 	}
 
-	bool load_gl_shader (GLenum type, std::string const& filename, GLuint* shad, std::string* preprocessed, std::vector<std::string>* file_dependencies=nullptr) {
+	bool load_gl_shader (GLenum type, std::string const& filename, GLuint* shad, std::string* source, std::vector<std::string>* file_dependencies=nullptr) {
 		*shad = glCreateShader(type);
 
-		std::string source;
-		if (!preprocess_shader(filename, &source, file_dependencies)) return false;
+		if (!preprocess_shader(filename, source, file_dependencies)) return false;
 
 		{
-			cstr ptr = source.c_str();
+			cstr ptr = source->c_str();
 			glShaderSource(*shad, 1, &ptr, NULL);
 		}
 
@@ -256,18 +258,18 @@ struct Shader_Manager {
 			success = status == GL_TRUE;
 			if (!success) {
 				// compilation failed
-				fprintf(stderr, "OpenGL error in shader compilation \"%s\"!\n>>>\n%s\n<<<\n", filename.c_str(), log_avail ? log_str.c_str() : "<no log available>");
+				errprint("OpenGL error in shader compilation \"%s\"!\n>>>\n%s\n<<<\n", filename.c_str(), log_avail ? log_str.c_str() : "<no log available>");
 			} else {
 				// compilation success
 				if (log_avail) {
-					fprintf(stderr, "OpenGL shader compilation log \"%s\":\n>>>\n%s\n<<<\n", filename.c_str(), log_str.c_str());
+					errprint("OpenGL shader compilation log \"%s\":\n>>>\n%s\n<<<\n", filename.c_str(), log_str.c_str());
 				}
 			}
 		}
 
 		return success;
 	}
-	GLuint load_gl_shader_program (std::string const& vert_filename, std::string const& frag_filename, std::vector<std::string>* file_dependencies=nullptr) {
+	GLuint load_gl_shader_program (std::string const& vert_filename, std::string const& frag_filename, std::string* vert_src, std::string* frag_src, std::vector<std::string>* file_dependencies=nullptr) {
 		GLuint prog_handle = glCreateProgram();
 
 		GLuint vert;
@@ -275,10 +277,8 @@ struct Shader_Manager {
 
 		bool compile_success = true;
 
-		std::string vert_pp_src, frag_pp_src;
-
-		bool vert_success = load_gl_shader(GL_VERTEX_SHADER,		vert_filename, &vert, &vert_pp_src, file_dependencies);
-		bool frag_success = load_gl_shader(GL_FRAGMENT_SHADER,		frag_filename, &frag, &frag_pp_src, file_dependencies);
+		bool vert_success = load_gl_shader(GL_VERTEX_SHADER,		vert_filename, &vert, vert_src, file_dependencies);
+		bool frag_success = load_gl_shader(GL_FRAGMENT_SHADER,		frag_filename, &frag, frag_src, file_dependencies);
 
 		if (!(vert_success && frag_success)) {
 			glDeleteProgram(prog_handle);
@@ -302,11 +302,11 @@ struct Shader_Manager {
 			success = status == GL_TRUE;
 			if (!success) {
 				// linking failed
-				fprintf(stderr, "OpenGL error in shader linkage \"%s\"|\"%s\"!\n>>>\n%s\n<<<\n", vert_filename.c_str(), frag_filename.c_str(), log_avail ? log_str.c_str() : "<no log available>");
+				errprint("OpenGL error in shader linkage \"%s\"|\"%s\"!\n>>>\n%s\n<<<\n", vert_filename.c_str(), frag_filename.c_str(), log_avail ? log_str.c_str() : "<no log available>");
 			} else {
 				// linking success
 				if (log_avail) {
-					fprintf(stderr, "OpenGL shader linkage log \"%s\"|\"%s\":\n>>>\n%s\n<<<\n", vert_filename.c_str(), frag_filename.c_str(), log_str.c_str());
+					errprint("OpenGL shader linkage log \"%s\"|\"%s\":\n>>>\n%s\n<<<\n", vert_filename.c_str(), frag_filename.c_str(), log_str.c_str());
 				}
 			}
 		}
@@ -320,19 +320,28 @@ struct Shader_Manager {
 		return prog_handle;
 	}
 
-	Shader load_shader (std::string const& name, std::vector<std::string>* file_dependencies=nullptr) {
-		auto h = load_gl_shader_program(	name +".vert",
-											name +".frag", file_dependencies );
-		return Shader::take_handle(h);
-	}
-
-	//
 	struct Cached_Shader {
 		Shader	shad;
 
 		std::vector<std::string> file_dependencies; // if any file this shader is made out of is changed reload the shader
+
+		std::string vert_src;
+		std::string frag_src;
 	};
 
+	Cached_Shader load_shader (std::string const& name) {
+		Cached_Shader cs;
+
+		auto h = load_gl_shader_program(	name +".vert",	name +".frag",
+											&cs.vert_src,	&cs.frag_src,
+											&cs.file_dependencies );
+
+		cs.shad = Shader::take_handle(h);
+		
+		return cs;
+	}
+
+	//
 	std::unordered_map<std::string, Cached_Shader> shaders;
 
 	Shader* get_shader (std::string const& name) {
@@ -340,7 +349,7 @@ struct Shader_Manager {
 		if (shad == shaders.end()) {
 			Cached_Shader s;
 
-			s.shad = load_shader(name, &s.file_dependencies);
+			s = load_shader(name);
 			if (s.shad.get_prog_handle() == 0)
 				return nullptr;
 
@@ -389,6 +398,50 @@ struct Shader_Manager {
 
 	std::vector<unique_ptr<Directory_Watcher>> dir_watchers;
 	
+	struct Shader_Window {
+		static constexpr cstr window_name = "Shader_Window";
+
+		std::string		shader = "";
+		bool			open;
+
+		void imgui (Shader_Manager* sm) {
+			
+			Cached_Shader* cs;
+
+			auto res = sm->shaders.find(shader);
+			cs = res != sm->shaders.end() ? &res->second : nullptr;
+			
+			if (ImGui::BeginCombo("shader", cs ? shader.c_str() : "<none>")) {
+
+				for (auto& it : sm->shaders) {
+					auto& name = it.first;
+					Cached_Shader& s = it.second;
+
+					bool is_selected = &s == cs;
+					if (ImGui::Selectable(name.c_str(), is_selected))
+						shader = name;
+					if (is_selected)
+						ImGui::SetItemDefaultFocus();
+				}
+
+				ImGui::EndCombo();
+			}
+
+			if (cs) {
+				if (ImGui::CollapsingHeader("Vertex Shader Source", ImGuiTreeNodeFlags_DefaultOpen)) {
+					auto& s = cs->vert_src;
+					ImGui::TextUnformatted(&s[0], &s[ s.size() ]);
+				}
+				if (ImGui::CollapsingHeader("Fragment Shader Source", ImGuiTreeNodeFlags_DefaultOpen)) {
+					auto& s = cs->frag_src;
+					ImGui::TextUnformatted(&s[0], &s[ s.size() ]);
+				}
+			}
+		}
+	};
+
+	Window_Button<Shader_Window> shader_windows;
+
 	void poll_reload_shaders (int frame_i) {
 		
 		if (dir_watchers.size() == 0) {
@@ -417,9 +470,7 @@ struct Shader_Manager {
 			if (any_contains(shad.second.file_dependencies, changed_files)) {
 				// dependency changed
 
-				Cached_Shader s;
-
-				s.shad = load_shader(filepath, &s.file_dependencies);
+				Cached_Shader s = load_shader(filepath);
 
 				if (s.shad.get_prog_handle() == 0) {
 					// new shader could not be loaded, keep the old shader
@@ -431,6 +482,8 @@ struct Shader_Manager {
 			}
 
 		}
+
+		shader_windows.imgui(this);
 	}
 };
 

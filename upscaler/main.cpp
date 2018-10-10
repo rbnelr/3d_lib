@@ -215,8 +215,9 @@ struct App : public Application {
 			v2 magnification = visible_size_px / (v2)size_px;
 			//assert(equal_epsilon(magnification.x, magnification.y, 0.05f));
 
+			/*
 			magnification *= 100;
-			bool set_magnif = imgui::DragFloat("image size %.2f %%", &magnification.y);
+			bool set_magnif = imgui::DragFloat("image magnification", &magnification.y);
 			magnification /= 100;
 
 			if (set_magnif) {
@@ -224,7 +225,7 @@ struct App : public Application {
 				v2 cam_size_world = (v2)inp.wnd_size_px / (visible_size_px * tex_size_world);
 
 				cam.size_world = cam_size_world;
-			}
+			}*/
 
 			static bool filter_nearest = false;
 			if (imgui::Checkbox("filter_nearest", &filter_nearest) || tex_changed)
@@ -237,7 +238,7 @@ struct App : public Application {
 			static flt step_size_px = 1;
 			imgui::DragFloat("step_size_px", &step_size_px, 0.1f / 40);
 
-			static flt threshold = 0.01f;
+			static flt threshold = 0.2f;
 			imgui::DragFloat("threshold", &threshold, 0.01f / 30);
 
 			static int gradient_normal_samples = 8;

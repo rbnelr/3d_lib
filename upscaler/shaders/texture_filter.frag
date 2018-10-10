@@ -40,34 +40,36 @@ vec2 calc_gradient_normal (vec2 uv) {
 }
 
 vec3 visualize (vec2 vec) {
-	float angle = atan(vec.x +0.001, vec.y) / deg(360);
+	float angle = atan(vec.y +0.001, vec.x) / deg(360);
 	return hsl_to_rgb(vec3(angle, 1, 0.5)) * length(vec);
 	//return vec3(vec,0);
 }
 
 float calc_edge_distance (vec2 gradient) {
-	if (length(gradient) == 0) return 999;
+	if (length(gradient) < 0.001) return 1;
 
-	float a = luma(texture(tex, vs_uv).rgb);
-	
-	int steps = 100;
-	float step_size = 0.01;
+	gradient = normalize(gradient);
+
+	vec2 textel_size_uv = 1.0 / tex_size_px;
+
+	int steps = 32;
+	float step_size = 1.5 / float(steps);
 	
 	float dist = 0;
 	
 	int i;
 	for (i=0; i<steps; ++i) {
-		vec2 dir = -gradient * (dist +step_size / 2);
+		vec2 dir = -gradient * (dist +textel_size_uv / 2);
 	
-		float b = luma(texture(tex, vs_uv +dir * step_size_px).rgb);
+		vec2 gradient_b = calc_gradient_normal(vs_uv +dir * textel_size_uv);
 	
-		if (b < a)
+		if (dot(gradient, gradient_b) < 0.001)
 			break;
 	
 		dist += step_size;
 	}
 	
-	return float(i) / 100.0;
+	return float(i) / float(steps);
 }
 
 
@@ -75,14 +77,21 @@ vec4 filter () {
 	vec4 rgba = texture(tex, vs_uv).rgba;
 	vec3 col = rgba.rgb;
 	float alpha = rgba.a;
-
-	if (dbg_right())
-		return rgba;
 	
 	vec2 gradient = calc_gradient_normal(vs_uv);
-	return vec4(visualize(gradient), 1);
+	
+	//if (dbg_right() && dbg_up())
+	//	DEBUG(visualize(gradient));
 
 	float dist = calc_edge_distance(gradient);
+	
+	//if (dbg_left() && dbg_up())
+	if (dbg_left())
+		DEBUG(rgba);
 
-	return vec4(vec3(dist), alpha);
+	if (length(gradient) >= 0.001)
+		col = dist > 0.5 ? vec3(1,1,1) : vec3(0,0,0);
+
+	return vec4(col, alpha);
+	//return vec4(vec3(dist), alpha);
 }

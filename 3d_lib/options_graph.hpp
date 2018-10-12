@@ -301,14 +301,14 @@ public:
 	static bool parse (type_e type, unit_e unit, std::string const& s, void* val) {
 		if (type == STRUCT || type == ARRAY) {
 			if (s.size() != 0) {
-				fprintf(stderr, "Stray value \"%s\" in %s node!\n", s.c_str(), typename_(type));
+				errprint("Stray value \"%s\" in %s node!\n", s.c_str(), typename_(type));
 				return false;
 			}
 			return true; // no value to load
 		} else {
 			
 			if (!_parse(type, unit, s, val)) {
-				fprintf(stderr, "Could not parse \"%s\" into %s!\n", s.c_str(), typename_(type));
+				errprint("Could not parse \"%s\" into %s!\n", s.c_str(), typename_(type));
 				return false;
 			}
 			return true;
@@ -414,7 +414,7 @@ struct Options_Graph {
 	}
 	void end_frame () {
 		if (cur_parent)
-			fprintf(stderr, "Options: too few end() calls!\n");
+			errprint("Options: too few end() calls!\n");
 		cur_parent = nullptr;
 	}
 
@@ -524,7 +524,7 @@ struct Options_Graph {
 	}
 	void end () {
 		if (!cur_parent)
-			fprintf(stderr, "Save: too many end() calls!\n");
+			errprint("Save: too many end() calls!\n");
 		else
 			cur_parent = cur_parent->parent;
 	}
@@ -663,7 +663,7 @@ bool from_xml (Options_Graph* graph, cstr filepath) {
 	try {
 		xml_doc.parse<0>(&text[0]);
 	} catch (rapidxml::parse_error e) {
-		fprintf(stderr, "rapidxml: \"%s\"\n", e.what());
+		errprint("rapidxml: \"%s\"\n", e.what());
 		return false;
 	}
 

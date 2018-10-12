@@ -1,6 +1,6 @@
 
 #include "3d_lib/engine.hpp"
-#include "3d_lib/camera.hpp"
+#include "3d_lib/camera2D.hpp"
 #include "mylibs/random.hpp"
 
 using namespace engine;
@@ -68,48 +68,45 @@ void gen_points () {
 	recurse_gen_points(0, v2(0,+1), 0, size, 0);
 }
 
-void frame (Display& dsp, Input& inp, flt dt) {
-	
-	static bool wireframe_enable = false;
-	save->value("wireframe_enable", &wireframe_enable);
-	imgui::Checkbox("wireframe_enable", &wireframe_enable);
-	engine::set_shared_uniform("wireframe", "enable", wireframe_enable);
+struct App : public Application {
+	void frame () {
 
-	static Camera cam;
+		static bool wireframe_enable = false;
+		save->value("wireframe_enable", &wireframe_enable);
+		imgui::Checkbox("wireframe_enable", &wireframe_enable);
+		engine::set_shared_uniform("wireframe", "enable", wireframe_enable);
 
-	{ // view
+		static Camera2D cam (0, 5.1f);
+
 		cam.update(inp, dt);
+		cam.draw_to();
 
-		engine::set_shared_uniform("view", "cam_to_clip", cam.cam_to_clip);
-		engine::set_shared_uniform("view", "world_to_cam", cam.world_to_cam.m4());
-	}
+		Cpu_Mesh<Default_Vertex_3d> mesh;
 
-	Cpu_Mesh<Default_Vertex_3d> mesh;
-	
-	//
-	engine::draw_to_screen(inp.wnd_size_px);
-	engine::clear(0);
+		//
+		engine::draw_to_screen(inp.wnd_size_px);
+		engine::clear(0.1f);
 
-	draw_skybox_gradient();
-	
-	if (0) {
-		for (int y=-5; y<6; ++y) {
-			for (int x=-5; x<6; ++x) {
-				points.push_back((v2)iv2(x,y));
+		if (0) {
+			for (int y=-5; y<6; ++y) {
+				for (int x=-5; x<6; ++x) {
+					points.push_back((v2)iv2(x,y));
+				}
 			}
+		} else {
+			gen_points();
 		}
-	} else {
-		gen_points();
-	}
 
-	for (auto p : points)
-		draw_rect(p, 0.05f, lrgba(0,0,0,1));
-	draw_lines(lines, 0, 1, lrgba(1,0.5f,0.5f,1));
-}
+		for (auto p : points)
+			draw_rect(p, 0.05f, lrgba(0,0,0,1));
+		draw_lines(lines, 0, 1, lrgba(1,0.5f,0.5f,1));
+	}
+};
 
 int main () {
-	random::seed(0);
-
-	engine::run_display(frame, MSVC_PROJECT_NAME);
+	App app;
+	app.open(MSVC_PROJECT_NAME);
+	app.run();
 	return 0;
 }
+

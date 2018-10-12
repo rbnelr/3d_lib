@@ -87,7 +87,7 @@ public:
 
 		if (trigger_load) {
 			if (!from_xml(&graph, save_filepath)) {
-				fprintf(stderr, "Options: Could load from xml!\n");
+				errprint("Options: Could load from xml!\n");
 			}
 		}
 
@@ -98,7 +98,7 @@ public:
 
 		if (trigger_save)
 			if (!to_xml(graph, save_filepath))
-				fprintf(stderr, "Options: Could not save to xml!\n");
+				errprint("Options: Could not save to xml!\n");
 	}
 
 };

@@ -217,7 +217,7 @@ struct Cpu_Mesh {
 		for (int i=0; i<r_indxs; ++i) {
 			auto new_index = r.indecies[i] +l_verts;
 			if (new_index > std::numeric_limits<INDX>::max()) {
-				fprintf(stderr, "Error: index overflow in Cpu_Mesh::add!\n");
+				errprint("Error: index overflow in Cpu_Mesh::add!\n");
 				assert(false);
 			}
 			indecies[l_indxs +i] = (INDX)new_index;

@@ -75,7 +75,7 @@ struct Placed_Blocks {
 		iv2 pos;
 		for (pos.y=0; pos.y<tetris_visible_cells.y; ++pos.y) {
 			for (pos.x=0; pos.x<tetris_visible_cells.x; ++pos.x) {
-				auto block = cells.get()[pos.y * tetris_stored_cells.y + pos.x];
+				auto block = cells.get()[pos.y * tetris_stored_cells.x + pos.x];
 
 				if (block.type) {
 					draw_rect((v2)pos +0.5f, 1, lrgba(block.type->col, 1));
@@ -149,50 +149,33 @@ Active_Tetromino spawn_random_tetromino () {
 	return spawn_tetromino( &tetromino_types[ rand() % (int)tetromino_types.size() ] );
 }
 
-void frame (Display& dsp, Input& inp, flt dt) {
+struct Tetris : public engine::Application {
+	virtual ~Tetris () {}
+
+	void frame () {
 	
-	static Camera2D cam;
-
-	{
-		draw_to_screen(inp.wnd_size_px);
-		clear(0);
-
-		v2 tetris_aspect = (v2)tetris_visible_cells;
-
-		// black bars
-		v2 tmp = (v2)inp.wnd_size_px / tetris_aspect;
-		tmp = min(tmp.x,tmp.y);
-
-		iv2 frame_size_px = (iv2)(tmp * tetris_aspect);
-
-		iv2 frame_offs = (inp.wnd_size_px -frame_size_px) / 2;
-
-		draw_to_screen(frame_offs, frame_size_px);
-
-		// view
-		cam.base_vsize_world = (flt)tetris_visible_cells.y;
-		cam.pos_world = (v2)tetris_visible_cells / 2;
+		static Camera2D cam = Camera2D::arcade_style_cam((v2)tetris_visible_cells);
 
 		cam.update(inp, dt);
+		cam.draw_to();
 
-		set_shared_uniform("view", "world_to_cam", cam.world_to_cam.m4());
-		set_shared_uniform("view", "cam_to_clip", cam.cam_to_clip);
-	}
-	static auto bg_color = srgb8(7,14,32).to_lrgb();
-	clear(bg_color);
+		static auto bg_color = srgb8(7,14,32).to_lrgb();
+		clear(bg_color);
 	
-	static Placed_Blocks		blocks;
-	static Active_Tetromino		active_tetromino = spawn_random_tetromino();
-	active_tetromino.update(inp, dt);
+		static Placed_Blocks		blocks;
+		static Active_Tetromino		active_tetromino = spawn_random_tetromino();
+		active_tetromino.update(inp, dt);
 
-	blocks.draw();
-	active_tetromino.draw();
+		blocks.draw();
+		active_tetromino.draw();
+	}
+};
 
-}
+Tetris tetris;
 
 int main () {
 	srand((uint)time(NULL));
-
-	run_display(frame, MSVC_PROJECT_NAME);
+	tetris.open(MSVC_PROJECT_NAME);
+	tetris.run();
 	return 0;
 }

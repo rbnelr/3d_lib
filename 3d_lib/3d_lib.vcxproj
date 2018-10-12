@@ -150,8 +150,10 @@
     <ClInclude Include="camera.hpp" />
     <ClInclude Include="camera2D.hpp" />
     <ClInclude Include="common_colors.hpp" />
+    <ClInclude Include="console.hpp" />
     <ClInclude Include="engine.hpp" />
     <ClInclude Include="dear_imgui.hpp" />
+    <ClInclude Include="Imgui_Window_Button.hpp" />
     <ClInclude Include="utils.hpp" />
     <ClInclude Include="gl_rendertarget.hpp" />
     <ClInclude Include="engine_include.hpp" />

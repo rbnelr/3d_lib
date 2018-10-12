@@ -44,6 +44,8 @@ static constexpr bool not_implemented = false; // use like: assert(not_implement
 #include "mylibs/colors.hpp"
 #include "mylibs/float_precision.hpp"
 
+#define errprint(...) fprintf(stderr, __VA_ARGS__)
+
 namespace engine {
 	using namespace basic_typedefs;
 	using namespace vector;

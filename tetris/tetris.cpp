@@ -165,7 +165,7 @@ struct Active_Tetromino {
 	void place_tetronimo (Placed_Blocks* blocks) {
 		for (auto& b : blocks_rotated_world) {
 			if (!(blocks->get(b) && blocks->get(b)->type == nullptr))
-				fprintf(stderr, "blocks->get(b) && blocks->get(b)->type == nullptr");
+				errprint("blocks->get(b) && blocks->get(b)->type == nullptr");
 			//assert(blocks->get(b) && blocks->get(b)->type == nullptr);
 			if (blocks->get(b))
 				blocks->get(b)->type = type;
@@ -229,67 +229,44 @@ Active_Tetromino spawn_random_tetromino () {
 	return spawn_tetromino( &tetromino_types[ rand() % (int)tetromino_types.size() ] );
 }
 
-void frame (Display& dsp, Input& inp, flt dt) {
+struct App : public Application {
+	void frame () {
 
-	static Camera2D cam = [] () {
-		Camera2D cam;
-		cam.key_reset = 'T';
-		cam.fixed = true;
-		cam.base_vsize_world = (flt)tetris_visible_cells.y;
-		cam.pos_world = (v2)tetris_visible_cells / 2;
-		return cam;
-	} ();
+		static Camera2D cam = Camera2D::arcade_style_cam((v2)tetris_visible_cells);
 
-	static int score = 0;
+		cam.update(inp, dt);
+		cam.draw_to();
 
-	{
-		draw_to_screen(inp.wnd_size_px);
-		clear(0);
+		static int score = 0;
 
-		v2 tetris_aspect = (v2)tetris_visible_cells;
+		static auto bg_color = srgb8(7,14,32).to_lrgb();
+		clear(bg_color);
 
-		// black bars
-		v2 tmp = (v2)inp.wnd_size_px / tetris_aspect;
-		tmp = min(tmp.x,tmp.y);
+		speedup = pow(1.05f, score);
 
-		iv2 frame_size_px = (iv2)(tmp * tetris_aspect);
+		static Placed_Blocks		blocks;
+		static Active_Tetromino		active_tetromino = spawn_random_tetromino();
+		if (inp.went_down('R') || !active_tetromino.is_active())
+			active_tetromino = spawn_random_tetromino();
 
-		iv2 frame_offs = (inp.wnd_size_px -frame_size_px) / 2;
+		if (active_tetromino.is_active())
+			active_tetromino.update(inp, dt, &blocks);
 
-		draw_to_screen(frame_offs, frame_size_px);
+		blocks.update(&score);
+		blocks.draw();
 
-		cam.update(inp, dt, { frame_offs, frame_size_px });
+		imgui::Text("Score: %d", score * 10);
+		imgui::Text("Speed: %.2f", speedup);
 
-		set_shared_uniform("view", "world_to_cam", cam.world_to_cam.m4());
-		set_shared_uniform("view", "cam_to_clip", cam.cam_to_clip);
+		if (active_tetromino.is_active())
+			active_tetromino.draw();
+
 	}
-	static auto bg_color = srgb8(7,14,32).to_lrgb();
-	clear(bg_color);
-
-	speedup = pow(1.05f, score);
-
-	static Placed_Blocks		blocks;
-	static Active_Tetromino		active_tetromino = spawn_random_tetromino();
-	if (inp.went_down('R') || !active_tetromino.is_active())
-		active_tetromino = spawn_random_tetromino();
-
-	if (active_tetromino.is_active())
-		active_tetromino.update(inp, dt, &blocks);
-
-	blocks.update(&score);
-	blocks.draw();
-
-	imgui::Text("Score: %d", score * 10);
-	imgui::Text("Speed: %.2f", speedup);
-
-	if (active_tetromino.is_active())
-		active_tetromino.draw();
-
-}
+};
 
 int main () {
-	srand((uint)time(NULL));
-
-	run_display(frame, MSVC_PROJECT_NAME);
+	App app;
+	app.open(MSVC_PROJECT_NAME);
+	app.run();
 	return 0;
 }

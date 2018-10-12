@@ -339,17 +339,7 @@ struct Snake_Game : engine::Application {
 	}
 
 	void draw_game () {
-		static Camera2D cam = [&] (iv2 size_world) {
-			Camera2D cam;
-
-			cam.size_world = (v2)size_world;
-			cam.pos_world = (v2)size_world / 2;
-
-			cam.controllable = false;
-			cam.black_bars = true;
-
-			return cam;
-		} (world.snake_cells);
+		static Camera2D cam = Camera2D::arcade_style_cam(world.snake_cells);
 
 		//draw_to_screen(inp.wnd_size_px);
 		//clear(white);
@@ -359,7 +349,7 @@ struct Snake_Game : engine::Application {
 		imgui::Separator();
 
 		cam.update(inp, dt);
-		cam.draw_to(inp, dt);
+		cam.draw_to();
 
 		clear(black);
 

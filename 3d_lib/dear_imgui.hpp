@@ -55,22 +55,26 @@ namespace ImGui {
 		Text("%s: %.2f %s", prefix, val, unit);
 	}
 
-	IMGUI_API bool InputText_str (const char* label, std::string* s, ImGuiInputTextFlags flags=0, ImGuiTextEditCallback callback=nullptr, void* user_data=nullptr) {
+	IMGUI_API bool InputText_str (const char* label, std::string* s, bool read_only=false) {
 		using namespace engine;
 
 		int cur_length = (int)s->size();
 		s->resize(1024);
 		(*s)[ min(cur_length, (int)s->size()-1) ] = '\0'; // is this guaranteed to work?
 
-		bool ret = InputText(label, &(*s)[0], (int)s->size(), flags, callback, user_data);
+		bool ret = InputText(label, &(*s)[0], (int)s->size(), read_only ? ImGuiInputTextFlags_ReadOnly : 0);
 
 		s->resize( strlen(&(*s)[0]) );
 
 		return ret;
 	}
 
-	IMGUI_API void TextBox (const char* label, std::string s) { // (pseudo) read-only text box, (can still be copied out of, which is nice, this also allows proper layouting)
-		InputText_str(label, &s);
+	IMGUI_API void TextBox (const char* label, std::string const& s) { // (pseudo) read-only text box, (can still be copied out of, which is nice, this also allows proper layouting)
+		InputText_str(label, (std::string*)&s, true); // const cast: i never modify the string
+	}
+
+	IMGUI_API void TextUnformatted (std::string const& s) {
+		TextUnformatted(&s[0], &s[ s.size() ]);
 	}
 }
 

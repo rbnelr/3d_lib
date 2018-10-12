@@ -145,7 +145,7 @@ struct Show_Dir {
 bool file_select (Input& inp, Texture2D** tex, iv2* size_px) {
 	static bool init = true;
 
-	static std::string folder = "J:/upscaler_test";
+	static std::string folder = "images/";//"J:/upscaler_test";
 	bool folder_changed = imgui::InputText_str("folder", &folder) || init;
 	static bool folder_ok = false;
 	imgui::SameLine();	imgui::TextColored(folder_ok ? ImVec4(0,1,0,1) : ImVec4(1,0,0,1), folder_ok ? "OK" : "FAIL!");
@@ -167,7 +167,7 @@ bool file_select (Input& inp, Texture2D** tex, iv2* size_px) {
 	if (!folder_ok)
 		return false;
 
-	static std::string selected_file = "J:/upscaler_test/01.jpg";
+	static std::string selected_file = "images/test.png";//"J:/upscaler_test/01.jpg";
 	bool selected_file_changed = Show_Dir::show(inp, dir, &selected_file);
 	
 	if (selected_file.size() == 0)
@@ -178,152 +178,150 @@ bool file_select (Input& inp, Texture2D** tex, iv2* size_px) {
 	return selected_file_changed;
 }
 
-void frame (Display& dsp, Input& inp, flt dt) {
+struct App : public Application {
+
+	Camera2D cam;
+
+	void frame () {
+
+		static bool wireframe_enable = false;
+		save->value("wireframe_enable", &wireframe_enable);
+		imgui::Checkbox("wireframe_enable", &wireframe_enable);
+		engine::set_shared_uniform("wireframe", "enable", wireframe_enable);
+
+		static iv2 size_px;
+		static Texture2D* tex;
+		bool tex_changed = file_select(inp, &tex, &size_px);
+
+		//
+		engine::draw_to_screen(inp.wnd_size_px);
+		engine::clear(npp_obsidian::bg_color);
 	
-	static bool wireframe_enable = false;
-	save->value("wireframe_enable", &wireframe_enable);
-	imgui::Checkbox("wireframe_enable", &wireframe_enable);
-	engine::set_shared_uniform("wireframe", "enable", wireframe_enable);
-
-	static bool vsync_enable = true;
-	imgui::Checkbox("vsync_enable", &vsync_enable);
-	dsp.set_vsync(vsync_enable ? VSYNC_ON : VSYNC_OFF);
-
-	static iv2 size_px;
-	static Texture2D* tex;
-	bool tex_changed = file_select(inp, &tex, &size_px);
-
-	//
-	engine::draw_to_screen(inp.wnd_size_px);
-	engine::clear(npp_obsidian::bg_color);
-
-	static Camera2D cam;
-	
-	{
 		cam.update(inp, dt);
+		cam.draw_to();
 
-		engine::set_shared_uniform("view", "world_to_cam", cam.world_to_cam.m4());
-		engine::set_shared_uniform("view", "cam_to_clip", cam.cam_to_clip);
-	}
-
-	if (tex) {
-		flt tex_aspect = (flt)size_px.x / (flt)size_px.y;
+		if (tex) {
+			flt tex_aspect = (flt)size_px.x / (flt)size_px.y;
 		
-		flt cam_aspect = (flt)inp.wnd_size_px.x / (flt)inp.wnd_size_px.y;
+			flt cam_aspect = (flt)inp.wnd_size_px.x / (flt)inp.wnd_size_px.y;
 
-		v2 tex_size_world;
-		if (cam_aspect > tex_aspect)
-			tex_size_world = v2(tex_aspect, 1);
-		else
-			tex_size_world = v2(cam_aspect, cam_aspect / tex_aspect);
+			v2 tex_size_world;
+			if (cam_aspect > tex_aspect)
+				tex_size_world = v2(tex_aspect, 1);
+			else
+				tex_size_world = v2(cam_aspect, cam_aspect / tex_aspect);
 
-		v2 visible_size_px = cam.get_size_world() * tex_size_world;
-		v2 magnification = visible_size_px / (v2)size_px;
-		//assert(equal_epsilon(magnification.x, magnification.y, 0.05f));
+			v2 visible_size_px = cam.size_world * tex_size_world;
+			v2 magnification = visible_size_px / (v2)size_px;
+			//assert(equal_epsilon(magnification.x, magnification.y, 0.05f));
 
-		magnification *= 100;
-		bool set_magnif = imgui::DragFloat("image size %.2f %%", &magnification.y);
-		magnification /= 100;
+			/*
+			magnification *= 100;
+			bool set_magnif = imgui::DragFloat("image magnification", &magnification.y);
+			magnification /= 100;
 
-		if (set_magnif) {
-			v2 visible_size_px = (v2)size_px * magnification.y;
-			v2 cam_size_world = (v2)inp.wnd_size_px / (visible_size_px * tex_size_world);
+			if (set_magnif) {
+				v2 visible_size_px = (v2)size_px * magnification.y;
+				v2 cam_size_world = (v2)inp.wnd_size_px / (visible_size_px * tex_size_world);
 
-			cam.zoom_to_vsize_world(cam_size_world.y);
-		}
+				cam.size_world = cam_size_world;
+			}*/
 
-		static bool filter_nearest = false;
-		if (imgui::Checkbox("filter_nearest", &filter_nearest) || tex_changed)
-			tex->set_minmag_filtering(filter_nearest ? FILTER_NEAREST : FILTER_LINEAR, USE_MIPMAPS);
+			static bool filter_nearest = false;
+			if (imgui::Checkbox("filter_nearest", &filter_nearest) || tex_changed)
+				tex->set_minmag_filtering(filter_nearest ? FILTER_NEAREST : FILTER_LINEAR, USE_MIPMAPS);
 		
-		static bool disable_filter = false;
-		imgui::Checkbox("disable_filter", &disable_filter);
+			static bool disable_filter = false;
+			imgui::Checkbox("disable_filter", &disable_filter);
 
 
-		static flt step_size_px = 1;
-		imgui::DragFloat("step_size_px", &step_size_px, 0.1f / 40);
+			static flt step_size_px = 1;
+			imgui::DragFloat("step_size_px", &step_size_px, 0.1f / 40);
 
-		static flt threshold = 0.01f;
-		imgui::DragFloat("threshold", &threshold, 0.01f / 30);
+			static flt threshold = 0.2f;
+			imgui::DragFloat("threshold", &threshold, 0.01f / 30);
 
-		static int gradient_normal_samples = 8;
-		imgui::DragInt("gradient_normal_samples", &gradient_normal_samples, 1.0f / 20);
+			static int gradient_normal_samples = 8;
+			imgui::DragInt("gradient_normal_samples", &gradient_normal_samples, 1.0f / 20);
 
-		{
-			glEnable(GL_BLEND);
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			glDisable(GL_DEPTH_TEST);
-			glDepthMask(GL_TRUE);
-			glDisable(GL_CULL_FACE);
-			glDisable(GL_SCISSOR_TEST);
+			{
+				glEnable(GL_BLEND);
+				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+				glDisable(GL_DEPTH_TEST);
+				glDepthMask(GL_TRUE);
+				glDisable(GL_CULL_FACE);
+				glDisable(GL_SCISSOR_TEST);
 
-			inline_shader("texture_filter_common.vert", R"_SHAD(
-				$include "common.vert"
+				inline_shader("texture_filter_common.vert", R"_SHAD(
+					$include "common.vert"
 
-				in		vec2	pos_model;
-				in		vec2	uv;
+					in		vec2	pos_model;
+					in		vec2	uv;
 
-				out		vec2	vs_uv;
+					out		vec2	vs_uv;
 
-				uniform	mat4	model_to_world;
-				uniform	mat4	view_world_to_cam;
-				uniform	mat4	view_cam_to_clip;
+					uniform	mat4	model_to_world;
+					uniform	mat4	view_world_to_cam;
+					uniform	mat4	view_cam_to_clip;
 
-				void vert () {
-					gl_Position = view_cam_to_clip * view_world_to_cam * model_to_world * vec4(pos_model, 0,1);
-					vs_uv = uv;
-				}
-			)_SHAD");
-			inline_shader("texture_filter_common.frag", R"_SHAD(
-				$include "common.frag"
+					void vert () {
+						gl_Position = view_cam_to_clip * view_world_to_cam * model_to_world * vec4(pos_model, 0,1);
+						vs_uv = uv;
+					}
+				)_SHAD");
+				inline_shader("texture_filter_common.frag", R"_SHAD(
+					$include "common.frag"
 			
-				in		vec2		vs_uv;
+					in		vec2		vs_uv;
 
-				uniform vec2		tex_size_px;
-				uniform sampler2D	tex;
+					uniform vec2		tex_size_px;
+					uniform sampler2D	tex;
 
-				vec4 filter ();
+					vec4 filter ();
 
-				vec4 frag () {
-					return filter();
-				}
-			)_SHAD");
+					vec4 frag () {
+						return filter();
+					}
+				)_SHAD");
 
-			inline_shader("texture_filter_no_filter.vert", R"_SHAD(
-				$include "texture_filter_common.vert"
-			)_SHAD");
-			inline_shader("texture_filter_no_filter.frag", R"_SHAD(
-				$include "texture_filter_common.frag"
+				inline_shader("texture_filter_no_filter.vert", R"_SHAD(
+					$include "texture_filter_common.vert"
+				)_SHAD");
+				inline_shader("texture_filter_no_filter.frag", R"_SHAD(
+					$include "texture_filter_common.frag"
 				
-				vec4 filter () { return texture(tex, vs_uv); }
-			)_SHAD");
+					vec4 filter () { return texture(tex, vs_uv); }
+				)_SHAD");
 
-			inline_shader("texture_filter.vert", R"_SHAD(
-				$include "texture_filter_common.vert"
-			)_SHAD");
+				inline_shader("texture_filter.vert", R"_SHAD(
+					$include "texture_filter_common.vert"
+				)_SHAD");
 
-			auto* s = use_shader(disable_filter ? "texture_filter_no_filter" : "texture_filter");
-			if (s) {
+				auto* s = use_shader(disable_filter ? "texture_filter_no_filter" : "texture_filter");
+				if (s) {
 
-				hm model_to_world = scaleH(v3(tex_size_world,1));
-				set_uniform(s, "model_to_world", model_to_world.m4());
+					hm model_to_world = scaleH(v3(tex_size_world,1));
+					set_uniform(s, "model_to_world", model_to_world.m4());
 
-				set_uniform(s, "tex_size_px", (v2)size_px);
-				bind_texture(s, "tex", 0, *tex);
+					set_uniform(s, "tex_size_px", (v2)size_px);
+					bind_texture(s, "tex", 0, *tex);
 
 
-				set_uniform(s, "step_size_px", step_size_px);
-				set_uniform(s, "threshold", threshold);
-				set_uniform(s, "gradient_normal_samples", gradient_normal_samples);
+					set_uniform(s, "step_size_px", step_size_px);
+					set_uniform(s, "threshold", threshold);
+					set_uniform(s, "gradient_normal_samples", gradient_normal_samples);
 
-				static auto rect = engine::gen_rect<Texture_Draw_Rect>([] (v2 p, v2 uv) { return Texture_Draw_Rect{p, uv}; }).upload();
-				rect.draw(*s);
+					static auto rect = engine::gen_rect<Texture_Draw_Rect>([] (v2 p, v2 uv) { return Texture_Draw_Rect{p, uv}; }).upload();
+					rect.draw(*s);
+				}
 			}
 		}
 	}
-}
+};
 
 int main () {
-	engine::run_display(frame, MSVC_PROJECT_NAME);
+	App app;
+	app.open(MSVC_PROJECT_NAME);
+	app.run();
 	return 0;
 }

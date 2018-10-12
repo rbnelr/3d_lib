@@ -60,6 +60,12 @@
     <ClInclude Include="common_colors.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="console.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Imgui_Window_Button.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">

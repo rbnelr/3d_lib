@@ -240,7 +240,7 @@ struct Snake_Game : engine::Application {
 		}
 	};
 
-	World world = World(10);
+	World world = World(16);
 	Snake snake = 0 ? get_test_snake() : Snake();
 	Apple apple = Apple::spawn_in_random_pos(snake, world);
 

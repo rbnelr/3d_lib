@@ -14,7 +14,7 @@ struct Snake_Game : engine::Application {
 	void frame () {
 		
 		cam.update(inp, dt);
-		cam.draw_to(inp,dt);
+		cam.draw_to();
 
 		clear(0);
 

@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27703.2026
+# Visual Studio 14
+VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "3d_lib", "3d_lib\3d_lib.vcxproj", "{DEB3C6CE-3D65-4EE8-9882-1E126FDD33EF}"
 EndProject
@@ -47,6 +47,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		TODO.txt = TODO.txt
 	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "loading_spinner", "loading_spinner\loading_spinner.vcxproj", "{416D6514-8ACD-43A2-889E-82B501DD8750}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "snake2", "snake2\snake2.vcxproj", "{2D1E3E71-5837-429F-99FE-E0C4CFC32D82}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -144,6 +148,22 @@ Global
 		{DCB32657-31BC-4270-87A8-38E00CF78B97}.Release|x64.Build.0 = Release|x64
 		{DCB32657-31BC-4270-87A8-38E00CF78B97}.Release|x86.ActiveCfg = Release|Win32
 		{DCB32657-31BC-4270-87A8-38E00CF78B97}.Release|x86.Build.0 = Release|Win32
+		{416D6514-8ACD-43A2-889E-82B501DD8750}.Debug|x64.ActiveCfg = Debug|x64
+		{416D6514-8ACD-43A2-889E-82B501DD8750}.Debug|x64.Build.0 = Debug|x64
+		{416D6514-8ACD-43A2-889E-82B501DD8750}.Debug|x86.ActiveCfg = Debug|Win32
+		{416D6514-8ACD-43A2-889E-82B501DD8750}.Debug|x86.Build.0 = Debug|Win32
+		{416D6514-8ACD-43A2-889E-82B501DD8750}.Release|x64.ActiveCfg = Release|x64
+		{416D6514-8ACD-43A2-889E-82B501DD8750}.Release|x64.Build.0 = Release|x64
+		{416D6514-8ACD-43A2-889E-82B501DD8750}.Release|x86.ActiveCfg = Release|Win32
+		{416D6514-8ACD-43A2-889E-82B501DD8750}.Release|x86.Build.0 = Release|Win32
+		{2D1E3E71-5837-429F-99FE-E0C4CFC32D82}.Debug|x64.ActiveCfg = Debug|x64
+		{2D1E3E71-5837-429F-99FE-E0C4CFC32D82}.Debug|x64.Build.0 = Debug|x64
+		{2D1E3E71-5837-429F-99FE-E0C4CFC32D82}.Debug|x86.ActiveCfg = Debug|Win32
+		{2D1E3E71-5837-429F-99FE-E0C4CFC32D82}.Debug|x86.Build.0 = Debug|Win32
+		{2D1E3E71-5837-429F-99FE-E0C4CFC32D82}.Release|x64.ActiveCfg = Release|x64
+		{2D1E3E71-5837-429F-99FE-E0C4CFC32D82}.Release|x64.Build.0 = Release|x64
+		{2D1E3E71-5837-429F-99FE-E0C4CFC32D82}.Release|x86.ActiveCfg = Release|Win32
+		{2D1E3E71-5837-429F-99FE-E0C4CFC32D82}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

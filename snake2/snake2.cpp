@@ -1,4 +1,4 @@
-
+﻿
 #include "3d_lib/engine.hpp"
 #include "3d_lib/camera2D.hpp"
 namespace imgui = ImGui;
@@ -10,32 +10,32 @@ struct Snake_Gameplay {
 
 	iv2 snake_cells = 16;
 
-	struct Snake_Bodypart {
-		iv2		pos;
+	std::vector<iv2> initial_snake = {
+		iv2(snake_cells / 2 +iv2(0,0)),
+		iv2(snake_cells / 2 +iv2(1,0)),
+		iv2(snake_cells / 2 +iv2(2,0)),
 	};
 
-	std::vector<Snake_Bodypart> initial_snake = {
-		{ iv2(snake_cells / 2 +iv2(0,0)) },
-		{ iv2(snake_cells / 2 +iv2(1,0)) },
-		{ iv2(snake_cells / 2 +iv2(2,0)) },
-	};
+	std::vector<iv2>	snake = initial_snake;
+	iv2					snake_move_dir = iv2(-1,0);
 
-	std::vector<Snake_Bodypart>	snake = initial_snake;
-	iv2							snake_move_dir = iv2(-1,0);
+	iv2					こんにちはばか外人 = iv2(3,0);
 
 	void tick (iv2 inp_dir) {
 		
-		if (any(inp_dir != 0))
+		if (any(inp_dir != 0) && all((snake_move_dir * inp_dir) == 0))
 			snake_move_dir = inp_dir;
 
-		iv2 moved = snake[0].pos + snake_move_dir;
+		iv2 moved = snake[0] + snake_move_dir;
 		if (all(moved >= 0 && moved < snake_cells)) {
 			
+			こんにちはばか外人 = snake.back();
+
 			for (int i=(int)snake.size()-1; i>=1; --i) {
-				snake[i].pos = snake[i-1].pos;
+				snake[i] = snake[i-1];
 			}
 
-			snake[0].pos = moved;
+			snake[0] = moved;
 		} else {
 			// collide with wall
 		}
@@ -90,6 +90,10 @@ struct Snake_Game : engine::Application {
 
 			return do_tick;
 		}
+
+		flt tick_t () {
+			return 1 -clamp(next_tick_timer / tick_interval);
+		}
 	};
 
 	Game_Timer timer;
@@ -124,10 +128,28 @@ struct Snake_Game : engine::Application {
 		};
 
 
-
 		for (auto& b : gameplay.snake) {
-			draw_rect((v2)b.pos +0.5f, 1);
+			draw_rect((v2)b +0.5f, 1);
 		}
+
+		flt t = timer.tick_t();
+		v2 head_dir = gameplay.snake_move_dir;
+		v2 tail_dir = gameplay.snake[ gameplay.snake.size() -2 ] -gameplay.snake[ gameplay.snake.size() -1 ];
+
+		v2 head_pos = gameplay.snake[0];
+		v2 tail_pos = gameplay.snake.back();
+
+		v2 head_normal = rotate2_90(head_dir);
+		v2 tail_normal = rotate2_90(tail_dir);
+
+		v2 head_base = head_pos +head_dir +0.5f -head_dir * 0.5f + head_dir * t/2;
+		v2 head_size = abs(head_normal) * 1 + abs(head_dir) * t;
+
+		v2 tail_base = tail_pos -tail_dir +0.5f +tail_dir * 0.5f - tail_dir * (1 -t)/2;
+		v2 tail_size = abs(tail_normal) * 1 + abs(tail_dir) * (1 -t);
+
+		draw_rect(head_base, head_size);
+		draw_rect(tail_base, tail_size);
 	}
 
 } app;

@@ -102,8 +102,8 @@ namespace math {
 	INL constexpr s64 clamp (s64 val, s64 l, s64 h) {	return min( max(val,l), h ); }
 	INL constexpr u64 clamp (u64 val, u64 l, u64 h) {	return min( max(val,l), h ); }
 
-	INL constexpr f32 clamp (f32 val, f32 l, f32 h) {	return min( max(val,l), h ); }
-	INL constexpr f64 clamp (f64 val, f64 l, f64 h) {	return min( max(val,l), h ); }
+	INL constexpr f32 clamp (f32 val, f32 l=0, f32 h=1) {	return min( max(val,l), h ); }
+	INL constexpr f64 clamp (f64 val, f64 l=0, f64 h=1) {	return min( max(val,l), h ); }
 
 	INL constexpr f32 lerp (f32 a, f32 b, f32 t) {		return a*(1.0f -t) +b*t; }
 

@@ -77,7 +77,7 @@ union V3 {
 	INL constexpr V3 min(V3 l, V3 r) {			return select(l <= r, l, r); }
 	INL constexpr V3 max(V3 l, V3 r) {			return select(r >= l, r, l); }
 	
-	INL constexpr V3 clamp (V3 val, V3 l, V3 h) {	return min( max(val,l), h ); }
+	INL constexpr V3 clamp (V3 val, V3 l=0, V3 h=1) {	return min( max(val,l), h ); }
 	
 #if FLTVEC
 	INL constexpr V3 lerp (V3 a, V3 b, V3 t) {								return (a * (V3(1) -t)) +(b * t); }

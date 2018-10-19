@@ -52,6 +52,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "loading_spinner", "loading_
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "snake2", "snake2\snake2.vcxproj", "{2D1E3E71-5837-429F-99FE-E0C4CFC32D82}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "smooth_caves", "smooth_caves\smooth_caves.vcxproj", "{B724D591-689A-4CA7-B637-082EDC292913}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -164,6 +166,14 @@ Global
 		{2D1E3E71-5837-429F-99FE-E0C4CFC32D82}.Release|x64.Build.0 = Release|x64
 		{2D1E3E71-5837-429F-99FE-E0C4CFC32D82}.Release|x86.ActiveCfg = Release|Win32
 		{2D1E3E71-5837-429F-99FE-E0C4CFC32D82}.Release|x86.Build.0 = Release|Win32
+		{B724D591-689A-4CA7-B637-082EDC292913}.Debug|x64.ActiveCfg = Debug|x64
+		{B724D591-689A-4CA7-B637-082EDC292913}.Debug|x64.Build.0 = Debug|x64
+		{B724D591-689A-4CA7-B637-082EDC292913}.Debug|x86.ActiveCfg = Debug|Win32
+		{B724D591-689A-4CA7-B637-082EDC292913}.Debug|x86.Build.0 = Debug|Win32
+		{B724D591-689A-4CA7-B637-082EDC292913}.Release|x64.ActiveCfg = Release|x64
+		{B724D591-689A-4CA7-B637-082EDC292913}.Release|x64.Build.0 = Release|x64
+		{B724D591-689A-4CA7-B637-082EDC292913}.Release|x86.ActiveCfg = Release|Win32
+		{B724D591-689A-4CA7-B637-082EDC292913}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

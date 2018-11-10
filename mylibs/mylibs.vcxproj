@@ -129,6 +129,7 @@
     <ClInclude Include="parse.hpp" />
     <ClInclude Include="preprocessor_stuff.hpp" />
     <ClInclude Include="random.hpp" />
+    <ClInclude Include="intersect.hpp" />
     <ClInclude Include="save_file.hpp" />
     <ClInclude Include="simple_file_io.hpp" />
     <ClInclude Include="sorted_vector.hpp" />

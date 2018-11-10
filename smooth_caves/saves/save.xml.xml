@@ -1,10 +1,13 @@
-<pos_world>-4.70703, -4.45444, 20.3586</pos_world>
-<altazimuth>-43.7989 deg, -40.0801 deg, 0 deg</altazimuth>
+<pos_world>-8.62297, -13.2891, 28.5527</pos_world>
+<altazimuth>-37.9191 deg, -29.8801 deg, 0 deg</altazimuth>
 <vfov>75 deg</vfov>
 <clip_near>0.0625</clip_near>
 <clip_far>1024</clip_far>
-<base_speed>1</base_speed>
+<base_speed>4</base_speed>
 <fast_mult>4</fast_mult>
 <wireframe_enable>false</wireframe_enable>
 <current_voxel_example>0</current_voxel_example>
+<Generator>
+	<size>64, 64, 24</size>
+</Generator>
 

@@ -13,7 +13,7 @@ namespace engine {
 		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 	}
 
-	m4 calc_perspective_matrix (flt vfov, flt clip_near, flt clip_far, flt aspect_w_over_h) {
+	m4 calc_perspective_matrix (flt vfov, flt clip_near, flt clip_far, flt aspect_w_over_h, m4* inv) {
 
 		v2 frustrum_scale = tan(vfov * 0.5f);
 		frustrum_scale.x *= aspect_w_over_h;
@@ -27,10 +27,16 @@ namespace engine {
 		f32 a = (clip_far +clip_near) / temp;
 		f32 b = (2 * clip_far * clip_near) / temp;
 
-		return m4::rows(	x, 0, 0, 0,
-							0, y, 0, 0,
-							0, 0, a, b,
-							0, 0,-1, 0 );
+		auto mat = m4::rows(	x, 0, 0, 0,
+								0, y, 0, 0,
+								0, 0, a, b,
+								0, 0,-1, 0 );
+		if (inv)
+			*inv = m4::rows(	1.0f / x,          0,          0,        0,
+									   0,   1.0f / y,          0,        0,
+									   0,          0,          0,       -1,
+									   0,          0,   1.0f / b,    a / b );
+		return mat;
 	}
 
 	// windows.h defines far & near
@@ -195,19 +201,19 @@ namespace engine {
 	}
 
 	struct Vertex_Draw_Lines {
-		v2		pos_model;
+		v3		pos_model;
 
 		static const Vertex_Layout layout;
 	};
 	const Vertex_Layout Vertex_Draw_Lines::layout = { (int)sizeof(Vertex_Draw_Lines), {
-		{ "pos_model",			FV2,	(int)offsetof(Vertex_Draw_Lines, pos_model) },
+		{ "pos_model",			FV3,	(int)offsetof(Vertex_Draw_Lines, pos_model) },
 	}};
 
-	void draw_lines (Cpu_Mesh<Vertex_Draw_Lines> lines, v2 pos, v2 size, lrgba col=1) {
+	void draw_lines (Gpu_Mesh const& lines, v3 pos, v3 size=1, lrgba col=1) {
 
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glDisable(GL_DEPTH_TEST);
+		glEnable(GL_DEPTH_TEST);
 		glDepthMask(GL_TRUE);
 		glDisable(GL_CULL_FACE);
 		glDisable(GL_SCISSOR_TEST);
@@ -215,14 +221,14 @@ namespace engine {
 		inline_shader("_simple_draw_rect.vert", R"_SHAD(
 			$include "common.vert"
 
-			in		vec2	pos_model;
+			in		vec3	pos_model;
 
 			uniform	mat4	model_to_world;
 			uniform	mat4	view_world_to_cam;
 			uniform	mat4	view_cam_to_clip;
 
 			void vert () {
-				gl_Position = view_cam_to_clip * view_world_to_cam * model_to_world * vec4(pos_model, 0,1);
+				gl_Position = view_cam_to_clip * view_world_to_cam * model_to_world * vec4(pos_model,1);
 			}
 		)_SHAD");
 		inline_shader("_simple_draw_rect.frag", R"_SHAD(
@@ -238,16 +244,53 @@ namespace engine {
 		auto* s = use_shader("_simple_draw_rect");
 		if (s) {
 
-			hm model_to_world = translateH(v3(pos,1)) * scaleH(v3(size,1));
+			hm model_to_world = translateH(pos) * scaleH(size);
 
 			set_uniform(s, "model_to_world", model_to_world.m4());
 			set_uniform(s, "col", col);
 
-			lines.upload().draw(LINES, *s);
+			lines.draw(LINES, *s);
 		}
 	}
+	void draw_line (v3 a, v3 b, lrgba col=1) {
+		static Cpu_Mesh<Vertex_Draw_Lines> mesh;
+		mesh.vertices.clear();
+		mesh.vertices.push_back({ 0 });
+		mesh.vertices.push_back({ b -a });
+		draw_lines(mesh.upload(), a, 1, col);
+	}
 
-	void draw_simple (Gpu_Mesh const& mesh, v3 pos_world, v3 scale=1, lrgba col=1) {
+	void draw_box_outline (v3 pos, v3 size, lrgba col=1) {
+		static auto box = [] () {
+			Cpu_Mesh<Vertex_Draw_Lines> mesh;
+
+			static constexpr v3 cube_verticies[] = {
+				v3(+1,-1,-1),
+				v3(+1,+1,-1),
+				v3(-1,+1,-1),
+				v3(-1,-1,-1),
+				v3(+1,-1,+1),
+				v3(+1,+1,+1),
+				v3(-1,+1,+1),
+				v3(-1,-1,+1),
+			};
+
+			for (auto v : cube_verticies)
+				mesh.vertices.push_back({ v / 2 });
+
+			mesh.indices = {
+				0,1, 1,2, 2,3, 3,0,
+				0,4, 1,5, 2,6, 3,7,
+				4,5, 5,6, 6,7, 7,4
+			};
+
+			return mesh.upload();
+		} ();
+
+		draw_lines(box, pos, size, col);
+	}
+
+	void draw_simple (Gpu_Mesh const& mesh, v3 pos_world, quat ori=quat::ident(), v3 scale=1, lrgba col=1) {
 
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -298,7 +341,7 @@ namespace engine {
 		auto* s = use_shader("_simple_draw_3d");
 		if (s) {
 
-			hm model_to_world = translateH(pos_world) * scaleH(scale);
+			hm model_to_world = translateH(pos_world) * convert_to_hm(ori) * scaleH(scale);
 
 			set_uniform(s, "model_to_world", model_to_world.m4());
 			set_uniform(s, "albedo", col);
@@ -307,60 +350,11 @@ namespace engine {
 		}
 	}
 
-	//void draw_cube (v3 pos_world, v3 scale, lrgba col) {
-	//	
-	//	auto upload_cube = [] () {
-	//		std::vector<Vertex> verts;
-	//
-	//		gen_cube(1, [&] (v3 p) { verts.push_back({p}); });
-	//
-	//		return VBO::gen_and_upload(verts.data(), (int)(verts.size() * sizeof(Vertex)));
-	//	};
-	//
-	//	static auto vbo = upload_cube();
-	//
-	//	glEnable(GL_BLEND);
-	//	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	//	glEnable(GL_DEPTH_TEST);
-	//	glEnable(GL_CULL_FACE);
-	//	glDisable(GL_SCISSOR_TEST);
-	//
-	//	inline_shader("_simple_draw_3d.vert", R"_SHAD(
-	//		$include "common.vert"
-	//
-	//		in		vec3	pos_model;
-	//
-	//		uniform	mat4	model_to_world;
-	//		uniform	mat4	view_world_to_cam;
-	//		uniform	mat4	view_cam_to_clip;
-	//
-	//		void vert () {
-	//			gl_Position = view_cam_to_clip * view_world_to_cam * model_to_world * vec4(pos_model,1);
-	//		}
-	//	)_SHAD");
-	//	inline_shader("_simple_draw_3d.frag", R"_SHAD(
-	//		$include "common.frag"
-	//
-	//		uniform vec4	col;
-	//
-	//		vec4 frag () {
-	//			return col;
-	//		}
-	//	)_SHAD");
-	//
-	//	auto* s = use_shader("_simple_draw_3d");
-	//	if (s) {
-	//
-	//		use_vertex_data(*s, layout, vbo);
-	//
-	//		hm model_to_world = translateH(pos_world) * scaleH(radius);
-	//
-	//		set_uniform(s, "model_to_world", model_to_world.m4());
-	//		set_uniform(s, "col", col);
-	//
-	//		draw_triangles(*s, 0, 6*6);
-	//	}
-	//}
+	void draw_simple (v3 pos_world, quat ori=quat::ident(), v3 scale=1, lrgba col=1) {
+		static auto cube = Default_Vertex_3d::gen_cube().upload();
+
+		draw_simple(cube, pos_world, ori, scale, col);
+	}
 
 	struct Vertex_Just_Pos {
 		v3		pos_world;

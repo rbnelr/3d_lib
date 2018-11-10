@@ -14,16 +14,6 @@ struct Voxels {
 
 	Voxels (iv3 size): size{size} {
 		voxels = make_unique<Voxel[]>(size.z * size.y * size.x);
-
-		// just for testing
-		iv3 p;
-		for (p.z=0; p.z<size.z; ++p.z) {
-			for (p.y=0; p.y<size.y; ++p.y) {
-				for (p.x=0; p.x<size.x; ++p.x) {
-					get(p)->density = (flt)rand() / (flt)RAND_MAX;
-				}
-			}
-		}
 	}
 
 	Voxel* get (iv3 pos) const {
@@ -34,9 +24,48 @@ struct Voxels {
 	}
 };
 
+struct Generator {
+	bool regen = true;
+
+	iv3	size = iv3(32,32,16);
+
+	bool imgui (Voxels* voxels) {
+		save->begin("Generator");
+		save->value("size", &size);
+		save->end();
+
+		if (!imgui::CollapsingHeader("Generator", ImGuiTreeNodeFlags_DefaultOpen))
+			return false;
+
+		regen = imgui::DragInt3("size", &size.x, 1.0f / 20) || regen;
+
+		if (regen) {
+			*voxels = gen_voxels();
+			regen = false;
+			return true;
+		}
+		return false;
+	}
+
+	Voxels gen_voxels () {
+		Voxels v = Voxels(size);
+
+		iv3 p;
+		for (p.z=0; p.z<size.z; ++p.z) {
+			for (p.y=0; p.y<size.y; ++p.y) {
+				for (p.x=0; p.x<size.x; ++p.x) {
+					v.get(p)->density = 1 -((flt)p.z * 1 + (flt)p.y * 0.2f + (flt)p.x * 0.1f) / 24;
+				}
+			}
+		}
+
+		return v;
+	}
+};
+
 #include "marching_cubes.hpp"
 
-Gpu_Mesh meshify (Voxels const& voxels) {
+Gpu_Mesh meshify (Voxels const& voxels, flt isolevel=0.5f) {
 
 	Cpu_Mesh<Default_Vertex_3d> mesh;
 
@@ -78,10 +107,10 @@ Gpu_Mesh meshify (Voxels const& voxels) {
 					else
 						density = 0;
 
-					gridcell.val[i] = 1 -density;
+					gridcell.val[i] = density;
 				}
 
-				int tri_count = Polygonise(gridcell, 0.5f, tris);
+				int tri_count = Polygonise(gridcell, isolevel, tris);
 
 				auto vert = [&] (v3 pos, v3 normal) {
 					Default_Vertex_3d v;
@@ -100,18 +129,20 @@ Gpu_Mesh meshify (Voxels const& voxels) {
 
 					v3 normal = normalize_or_zero( cross(ab, ac) );
 
-					if (length(a -b) < 0.01f)
-						printf("degenerate triangle!\n");
-					if (length(b -c) < 0.01f)
-						printf("degenerate triangle!\n");
-					if (length(c -a) < 0.01f)
-						printf("degenerate triangle!\n");
-					if (length(normal) < 0.01f)
-						printf("normal zero!\n");
+					//if (length(a -b) < 0.01f)
+					//	printf("degenerate triangle!\n");
+					//if (length(b -c) < 0.01f)
+					//	printf("degenerate triangle!\n");
+					//if (length(c -a) < 0.01f)
+					//	printf("degenerate triangle!\n");
+					//if (length(normal) < 0.01f)
+					//	printf("normal zero!\n");
 
-					vert(a, normal);
-					vert(b, normal);
-					vert(c, normal);
+					if (length(normal) != 0) {
+						vert(a, normal);
+						vert(b, normal);
+						vert(c, normal);
+					}
 				}
 			}
 		}
@@ -140,22 +171,30 @@ struct App : public Application {
 		static Voxels voxels = Voxels(iv3(32,32,16));
 		static Gpu_Mesh mesh;
 
+		static Generator gen;
+
 		static bool regen_voxels = true;
 		static flt regen_seconds = -1;
-	
-		regen_voxels = Button("regen_voxels") || regen_voxels;
-		SameLine();
-		Text("%8.3f ms", regen_seconds * 1000);
+
+		regen_voxels = gen.imgui(&voxels) || regen_voxels;
+
+		Text("regen_voxels: %8.3f ms", regen_seconds * 1000);
+
+		static flt isolevel = 0.5f;
+		regen_voxels = imgui::DragFloat("isolevel", &isolevel, 1.0f / 30) || regen_voxels;
 
 		if (regen_voxels) {
 			Timer t;
 			t.start();
 
-			mesh = meshify(voxels);
+			mesh = meshify(voxels, isolevel);
 
 			regen_seconds = t.end();
 		}
 		regen_voxels = false;
+
+		Text("voxels: %d", voxels.size.z * voxels.size.y * voxels.size.x);
+		Text("mesh: %8d %8d -> %9d bytes", mesh.vertex_count, mesh.index_count, mesh.layout->vertex_size * mesh.vertex_count + mesh.index_count * mesh.get_index_size_bytes(mesh.index_type));
 
 		//
 		engine::draw_to_screen(inp.wnd_size_px);

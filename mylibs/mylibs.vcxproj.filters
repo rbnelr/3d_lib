@@ -75,5 +75,8 @@
     <ClInclude Include="containers.hpp">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="intersect.hpp">
+      <Filter>src</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -39,6 +39,9 @@ namespace colors {
 		lrgb to_lrgb () const {
 			return to_linear((fv3)v / 255);
 		}
+		lrgba to_lrgba () const {
+			return lrgba(to_linear((fv3)v / 255), 1);
+		}
 	};
 	struct srgba8 {
 		u8v4	v;

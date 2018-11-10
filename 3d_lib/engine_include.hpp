@@ -87,14 +87,14 @@ namespace engine {
 			v2 p = mousecursor.pos_screen;
 			return v2(p.x, (flt)wnd_size_px.y -1 -p.y) + 0.5f;
 		}
-		v2 mouse_cursor_pos_clip () { // bottom up, pixel center
+		v2 mouse_cursor_pos_ndc () { // bottom up, pixel center
 			return mouse_cursor_pos_px() / (v2)wnd_size_px * 2 -1;
 		}
 
 		v2 mouse_cursor_pos_px (Screen_Rect const& rect) { // bottom up, pixel center
 			return mouse_cursor_pos_px() -(v2)rect.offs_px;
 		}
-		v2 mouse_cursor_pos_clip (Screen_Rect const& rect) { // bottom up, pixel center
+		v2 mouse_cursor_pos_ndc (Screen_Rect const& rect) { // bottom up, pixel center
 			return mouse_cursor_pos_px(rect) / (v2)rect.size_px * 2 -1;
 		}
 

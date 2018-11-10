@@ -40,12 +40,12 @@ public:
 	}
 	
 	void bind () const {
-		static GLuint prev = 0;
+		//static GLuint prev = 0;
 
-		if (handle != prev) // doing a glBindVertexArray anywhere outside this function will break (potentially crash) this optimization
+		//if (handle != prev) // doing a glBindVertexArray anywhere outside this function will break (potentially crash) this optimization
 			glBindVertexArray(handle);
 
-		prev = handle;
+		//prev = handle;
 	}
 
 	static VAO generate () {
@@ -71,12 +71,12 @@ public:
 	}
 
 	void bind () const {
-		static GLuint prev = 0;
+		//static GLuint prev = 0;
 
-		if (handle != prev) // doing a glBindBuffer anywhere outside this function will break (potentially crash) this optimization
+		//if (handle != prev) // doing a glBindBuffer anywhere outside this function will break (potentially crash) this optimization
 			glBindBuffer(GL_ARRAY_BUFFER, handle);
 
-		prev = handle;
+		//prev = handle;
 	}
 
 	static VBO generate () {
@@ -197,33 +197,33 @@ struct Gpu_Mesh;
 
 template <typename VERT, typename INDX=u16>
 struct Cpu_Mesh {
-	std::vector<VERT>	vertecies;
-	std::vector<INDX>	indecies;
+	std::vector<VERT>	vertices;
+	std::vector<INDX>	indices;
 
 	Gpu_Mesh upload (); // for convenience
 
 	void clear () {
-		vertecies.clear();
-		indecies .clear();
+		vertices.clear();
+		indices .clear();
 	}
 
 	void add (Cpu_Mesh<VERT> const& r) {
-		auto l_verts = vertecies.size();
+		auto l_verts = vertices.size();
 
-		auto l_indxs = indecies.size();
-		auto r_indxs = r.indecies.size();
+		auto l_indxs = indices.size();
+		auto r_indxs = r.indices.size();
 
-		indecies.resize(l_indxs +r_indxs);
+		indices.resize(l_indxs +r_indxs);
 		for (int i=0; i<r_indxs; ++i) {
-			auto new_index = r.indecies[i] +l_verts;
+			auto new_index = r.indices[i] +l_verts;
 			if (new_index > std::numeric_limits<INDX>::max()) {
 				errprint("Error: index overflow in Cpu_Mesh::add!\n");
 				assert(false);
 			}
-			indecies[l_indxs +i] = (INDX)new_index;
+			indices[l_indxs +i] = (INDX)new_index;
 		}
 
-		vertecies.insert(vertecies.end(), r.vertecies.begin(),r.vertecies.end());
+		vertices.insert(vertices.end(), r.vertices.begin(),r.vertices.end());
 	}
 };
 
@@ -313,31 +313,30 @@ struct Gpu_Mesh {
 
 	template <typename VERT, typename INDX>
 	static Gpu_Mesh upload (Cpu_Mesh<VERT,INDX> const& mesh) {
-		return upload(mesh.vertecies.data(), (GLuint)mesh.vertecies.size(), mesh.indecies.data(), (GLuint)mesh.indecies.size(), &VERT::layout, map_index_type<INDX>());
+		return upload(mesh.vertices.data(), (GLuint)mesh.vertices.size(), mesh.indices.data(), (GLuint)mesh.indices.size(), &VERT::layout, map_index_type<INDX>());
 	}
 	template <typename VERT, typename INDX>
 	void reupload (Cpu_Mesh<VERT,INDX> const& mesh) {
-		return reupload(mesh.vertecies.data(), (GLuint)mesh.vertecies.size(), mesh.indecies.data(), (GLuint)mesh.indecies.size(), &VERT::layout, map_index_type<INDX>());
+		return reupload(mesh.vertices.data(), (GLuint)mesh.vertices.size(), mesh.indices.data(), (GLuint)mesh.indices.size(), &VERT::layout, map_index_type<INDX>());
 	}
 
 	void bind (Shader const& shad) const {
 		assert(vertecies.get_handle() != 0);
 
-		static GLuint prev_vbo_handle = 0;
-		static GLuint prev_shader_handle = 0;
+		//static GLuint prev_vbo_handle = 0;
+		//static GLuint prev_shader_handle = 0;
+		//
+		//if (vertecies.get_handle() != prev_vbo_handle || shad.get_prog_handle() != prev_shader_handle) {
 
-		if (vertecies.get_handle() != prev_vbo_handle || shad.get_prog_handle() != prev_shader_handle) {
+		vertecies.bind();
 
-			vertecies.bind();
-
-			if (is_indexed())
-				indecies.bind();
+		if (is_indexed())
+			indecies.bind();
 			
-			layout->bind(shad);
+		layout->bind(shad);
 
-		}
-		prev_vbo_handle = vertecies.get_handle();
-		prev_shader_handle = shad.get_prog_handle();
+		//prev_vbo_handle = vertecies.get_handle();
+		//prev_shader_handle = shad.get_prog_handle();
 	}
 
 	void draw (primitive_e prim, Shader const& shad) const { // draws entire buffer
@@ -378,14 +377,14 @@ template <typename VERT,typename INDX> Gpu_Mesh Cpu_Mesh<VERT,INDX>::upload () {
 template <typename VERT, typename INDX=u16, typename GEN_VERT> Cpu_Mesh<VERT,INDX> gen_rect (GEN_VERT gen_vert, v2 radius=0.5f, v2 center=0) { // GEN_VERT:  VERT func (v2 pos, v2 uv)
 	Cpu_Mesh<VERT,INDX> m;
 	for (auto uv : { v2(0,0),v2(1,0),v2(1,1),v2(0,1) })
-		m.vertecies.push_back( gen_vert(lerp(-radius,+radius, uv) +center, uv) );
+		m.vertices.push_back( gen_vert(lerp(-radius,+radius, uv) +center, uv) );
 	
-	m.indecies = { 1,2,0, 0,2,3 };
+	m.indices = { 1,2,0, 0,2,3 };
 	return m;
 }
 
 template <typename VERT, typename INDX=u16, typename GEN_VERT> Cpu_Mesh<VERT,INDX> gen_cube (GEN_VERT gen_vert, v3 radius=0.5f, v3 center=0) { // GEN_VERT:  VERT func (v3 pos, v3 normal, v2 uv_face, int face_indx)
-
+	
 	struct Cube_Prototype_Vert {
 		v3 pos;
 		v3 normal;
@@ -418,23 +417,23 @@ template <typename VERT, typename INDX=u16, typename GEN_VERT> Cpu_Mesh<VERT,IND
 		printf("constexpr Cube_Prototype_Vert cube_vertecies[6*4] = {");
 		for (int i=0; i<(int)mesh.vertecies.size(); ++i) {
 			if (i % 4 == 0) printf("\n"); // each face on seperate line
-			
+
 			auto print_vert = [&] (v3 p, v3 n, v2 uv) {
 				auto round = [] (float f) { return abs(f) < 0.00001f ? 0 : f; };
 
 				printf("\t{ v3(%+g,%+g,%+g), v3(%+g,%+g,%+g), v2(%+g,%+g) },",
-					round(p.x),
-					round(p.y),
-					round(p.z),
+					   round(p.x),
+					   round(p.y),
+					   round(p.z),
 
-					round(n.x),
-					round(n.y),
-					round(n.z),
+					   round(n.x),
+					   round(n.y),
+					   round(n.z),
 
-					round(uv.x),
-					round(uv.y));
+					   round(uv.x),
+					   round(uv.y));
 			};
-			
+
 			auto v = mesh.vertecies[i];
 			print_vert(v.pos, v.normal, v.uv_face);
 		}
@@ -451,9 +450,9 @@ template <typename VERT, typename INDX=u16, typename GEN_VERT> Cpu_Mesh<VERT,IND
 	};
 	static bool _run_once = _gen_cube_verts();
 	#endif
-	
+
 	// Generated via the code above
-	static constexpr Cube_Prototype_Vert cube_vertecies[6*4] = {
+	static constexpr Cube_Prototype_Vert cube_verticies[6*4] = {
 		{ v3(+1,-1,-1), v3(+1,+0,+0), v2(+0,+0) },      { v3(+1,+1,-1), v3(+1,+0,+0), v2(+1,+0) },      { v3(+1,+1,+1), v3(+1,+0,+0), v2(+1,+1) },      { v3(+1,-1,+1), v3(+1,+0,+0), v2(+0,+1) },
 		{ v3(-1,+1,-1), v3(-1,+0,+0), v2(+0,+0) },      { v3(-1,-1,-1), v3(-1,+0,+0), v2(+1,+0) },      { v3(-1,-1,+1), v3(-1,+0,+0), v2(+1,+1) },      { v3(-1,+1,+1), v3(-1,+0,+0), v2(+0,+1) },
 		{ v3(+1,+1,-1), v3(+0,+1,+0), v2(+0,+0) },      { v3(-1,+1,-1), v3(+0,+1,+0), v2(+1,+0) },      { v3(-1,+1,+1), v3(+0,+1,+0), v2(+1,+1) },      { v3(+1,+1,+1), v3(+0,+1,+0), v2(+0,+1) },
@@ -473,11 +472,11 @@ template <typename VERT, typename INDX=u16, typename GEN_VERT> Cpu_Mesh<VERT,IND
 	Cpu_Mesh<VERT,INDX> m;
 	for (int face=0; face<6; ++face) {
 		for (int i=0; i<4; ++i) {
-			auto& v = cube_vertecies[face*4+ i];
-			m.vertecies.push_back( gen_vert(v.pos * radius +center, v.normal, v.uv_face, face) );
+			auto& v = cube_verticies[face*4+ i];
+			m.vertices.push_back( gen_vert(v.pos * radius +center, v.normal, v.uv_face, face) );
 		}
 	}
-	m.indecies.assign(&cube_indecies[0], &cube_indecies[6*6]);
+	m.indices.assign(&cube_indecies[0], &cube_indecies[6*6]);
 
 	return m;
 }
@@ -502,6 +501,17 @@ struct Default_Vertex_3d {
 	v4		tangent_model	= v4(0,+1, 0,+1);
 	v2		uv				= 0.5f;
 	lrgba	col_lrgba		= lrgba(white, 1);
+
+	static Cpu_Mesh<Default_Vertex_3d> gen_cube (v3 center=0, v3 size=1) {
+		return engine::vertex_layout::gen_cube<Default_Vertex_3d>([&] (v3 pos, v3 normal, v2 uv_face, int face_indx) {
+			Default_Vertex_3d v;
+			v.pos_model = pos * size + center;
+			v.normal_model = normal;
+			v.tangent_model = 0; // wrong for now
+			v.uv = uv_face;
+			return v;
+		});
+	}
 
 	static const Vertex_Layout layout;
 };

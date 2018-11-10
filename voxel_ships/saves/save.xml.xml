@@ -1,0 +1,11 @@
+<wireframe_enable>false</wireframe_enable>
+<Camera>
+	<pos_world>-14.6283, -20.5036, 9.48251</pos_world>
+	<altazimuth>-37.5601 deg, -35.76 deg, 0 deg</altazimuth>
+	<vfov>75 deg</vfov>
+	<clip_near>0.0625</clip_near>
+	<clip_far>1024</clip_far>
+	<base_speed>3.03143</base_speed>
+	<fast_mult>4</fast_mult>
+</Camera>
+

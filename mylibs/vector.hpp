@@ -207,6 +207,8 @@ namespace vector {
 		return ret;
 	}
 
+	INL HM convert_to_hm (QUAT q) { return HM(convert_to_m3(q)); }
+
 	INL V3 operator* (QUAT q, V3 v) { // not tested
 
 		V3 l_vec = q.xyz();

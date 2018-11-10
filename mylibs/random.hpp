@@ -24,6 +24,14 @@ namespace random {
 
 	Generator global_generator = Generator();
 
+	// chance
+	int chance (Generator& generator, flt prob=0.5f) {
+		std::bernoulli_distribution	distribution (prob);
+
+		return distribution(generator.generator);
+	}
+	bool chance (flt prob=0.5f) {							return chance(global_generator, prob); }
+
 	// int
 	int uniform (Generator& generator, int min, int max) {
 		assert(max > min);

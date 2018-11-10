@@ -22,8 +22,20 @@ namespace ImGui {
 	IMGUI_API void Value (const char* prefix, engine::fv2 v) {
 		Text("%s: %.2f, %.2f", prefix, v.x,v.y);
 	}
+	IMGUI_API void Value (const char* prefix, engine::fv3 v) {
+		Text("%s: %.2f, %.2f, %.2f", prefix, v.x,v.y,v.z);
+	}
+	IMGUI_API void Value (const char* prefix, engine::fv4 v) {
+		Text("%s: %.2f, %.2f, %.2f, %.2f", prefix, v.x,v.y,v.z,v.w);
+	}
 	IMGUI_API void Value (const char* prefix, engine::s32v2 v) {
 		Text("%s: %d, %d", prefix, v.x,v.y);
+	}
+	IMGUI_API void Value (const char* prefix, engine::s32v3 v) {
+		Text("%s: %d, %d, %d", prefix, v.x,v.y,v.z);
+	}
+	IMGUI_API void Value (const char* prefix, engine::s32v4 v) {
+		Text("%s: %d, %d, %d, %d", prefix, v.x,v.y,v.z,v.w);
 	}
 	IMGUI_API void Value (const char* prefix, engine::u64 i) {
 		Text("%s: %lld", prefix, i);

@@ -55,7 +55,18 @@ union V4 {
 	}
 	
 	INL constexpr bool equal (V4 l, V4 r) {		return l.x == r.x && l.y == r.y && l.z == r.z && l.w == r.w; }
-	
+
+	INL int smallest_comp (V4 v) {
+		int a = smallest_comp(v.xy());
+		int b = smallest_comp(V2(v.z, v.w));
+		return v[a] <= v[b] ? a : b;
+	}
+	INL int biggest_comp (V4 v) {
+		int a = biggest_comp(v.xy());
+		int b = biggest_comp(V2(v.z, v.w));
+		return v[a] >= v[b] ? a : b;
+	}
+
 	INL constexpr V4 operator+ (V4 v) {			return v; }
 	INL constexpr V4 operator- (V4 v) {			return V4(-v.x, -v.y, -v.z, -v.w); }
 
@@ -70,12 +81,12 @@ union V4 {
 	INL constexpr T dot(V4 l, V4 r) {			return l.x*r.x + l.y*r.y + l.z*r.z + l.w*r.w; }
 
 	INL V4 abs(V4 v) {							return V4(math::abs(v.x), math::abs(v.y), math::abs(v.z), math::abs(v.w)); }
-	INL T max_component(V4 v) {					return math::max(math::max(v.x, v.y), math::max(v.z, v.w)); }
+	INL T max_component(V4 v) {					return math::MAX(math::MAX(v.x, v.y), math::MAX(v.z, v.w)); }
 
-	INL constexpr V4 min(V4 l, V4 r) {			return select(l <= r, l, r); }
-	INL constexpr V4 max(V4 l, V4 r) {			return select(r >= l, r, l); }
+	INL constexpr V4 MIN (V4 l, V4 r) {			return select(l <= r, l, r); }
+	INL constexpr V4 MAX (V4 l, V4 r) {			return select(r >= l, r, l); }
 	
-	INL constexpr V4 clamp (V4 val, V4 l=0, V4 h=1)	{	return min( max(val,l), h ); }
+	INL constexpr V4 clamp (V4 val, V4 l=0, V4 h=1)	{	return MIN( MAX(val,l), h ); }
 	
 	#if FLTVEC
 	INL constexpr V4 lerp (V4 a, V4 b, V4 t) {								return (a * (V4(1) -t)) +(b * t); }
@@ -94,6 +105,7 @@ union V4 {
 	
 	INL V4 floor (V4 v) {						return V4(math::floor(v.x),	math::floor(v.y),	math::floor(v.z),	math::floor(v.w)); }
 	INL V4 ceil (V4 v) {						return V4(math::ceil(v.x),	math::ceil(v.y),	math::ceil(v.z),	math::ceil(v.w)); }
+	INL V4 round (V4 v) {						return V4(math::round(v.x),	math::round(v.y),	math::round(v.z),	math::round(v.w)); }
 
 	INL V4 pow (V4 v, V4 e) {					return V4(math::pow(v.x,e.x),	math::pow(v.y,e.y),	math::pow(v.z,e.z),	math::pow(v.w,e.w)); }
 	#endif

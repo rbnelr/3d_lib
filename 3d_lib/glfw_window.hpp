@@ -456,7 +456,7 @@ namespace engine {
 
 					flt w = ImGui::GetContentRegionAvailWidth();
 
-					int value_count = max(1, (int)round(w * values_per_pixel));
+					int value_count = MAX(1, (int)round(w * values_per_pixel));
 
 					static std::vector<flt> values (value_count, 0);
 					static int cur_value = 0;
@@ -473,7 +473,7 @@ namespace engine {
 
 							int values_to_erase = -delta;
 
-							int erase_end = min(values_to_erase, values_erasable_at_end);
+							int erase_end = MIN(values_to_erase, values_erasable_at_end);
 							int erase_begin = values_to_erase -erase_end;
 
 							values.erase(values.begin() +cur_value, values.begin() +cur_value +erase_end);
@@ -498,7 +498,7 @@ namespace engine {
 					}
 				}
 
-				dt = min(dt, 1.0f / 20); // prevent big timestep when paused or frozen for whatever reason
+				dt = MIN(dt, 1.0f / 20); // prevent big timestep when paused or frozen for whatever reason
 			}
 
 			//if (	(inp.buttons[GLFW_MOUSE_BUTTON_RIGHT].went_down && !ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow)) // unfocus imgui windows when right clicking outside of them

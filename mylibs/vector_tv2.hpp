@@ -51,6 +51,9 @@ union V2 {
 	
 	INL constexpr bool equal (V2 l, V2 r) {		return l.x == r.x && l.y == r.y; }
 	
+	INL constexpr int smallest_comp (V2 v) {	return v.x <= v.y ? 0 : 1; }
+	INL constexpr int biggest_comp (V2 v) {		return v.x >= v.y ? 0 : 1; }
+
 	INL constexpr V2 operator+ (V2 v) {			return v; }
 	INL constexpr V2 operator- (V2 v) {			return V2(-v.x, -v.y); }
 	
@@ -65,12 +68,12 @@ union V2 {
 	INL constexpr T dot (V2 l, V2 r) {			return l.x*r.x + l.y*r.y; }
 
 	INL V2 abs (V2 v) {							return V2(math::abs(v.x), math::abs(v.y)); }
-	INL T max_component (V2 v) {				return math::max(v.x, v.y); }
+	INL T max_component (V2 v) {				return math::MAX(v.x, v.y); }
 
-	INL constexpr V2 min (V2 l, V2 r) {			return select(l <= r, l, r); }
-	INL constexpr V2 max (V2 l, V2 r) {			return select(r >= l, r, l); }
+	INL constexpr V2 MIN (V2 l, V2 r) {			return select(l <= r, l, r); }
+	INL constexpr V2 MAX (V2 l, V2 r) {			return select(r >= l, r, l); }
 
-	INL constexpr V2 clamp (V2 val, V2 l=0, V2 h=1) {	return min( max(val,l), h ); }
+	INL constexpr V2 clamp (V2 val, V2 l=0, V2 h=1) {	return MIN( MAX(val,l), h ); }
 	
 	#if FLTVEC
 	INL constexpr V2 lerp (V2 a, V2 b, V2 t) {								return (a * (V2(1) -t)) +(b * t); }
@@ -89,6 +92,7 @@ union V2 {
 
 	INL V2 floor (V2 v) {						return V2(math::floor(v.x),		math::floor(v.y)); }
 	INL V2 ceil (V2 v) {						return V2(math::ceil(v.x),		math::ceil(v.y)); }
+	INL V2 round (V2 v) {						return V2(math::round(v.x),		math::round(v.y)); }
 
 	INL V2 pow (V2 v, V2 e) {					return V2(math::pow(v.x,e.x),	math::pow(v.y,e.y)); }
 	#endif

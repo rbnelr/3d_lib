@@ -72,7 +72,7 @@ namespace ImGui {
 
 		int cur_length = (int)s->size();
 		s->resize(1024);
-		(*s)[ min(cur_length, (int)s->size()-1) ] = '\0'; // is this guaranteed to work?
+		(*s)[ MIN(cur_length, (int)s->size()-1) ] = '\0'; // is this guaranteed to work?
 
 		bool ret = InputText(label, &(*s)[0], (int)s->size(), read_only ? ImGuiInputTextFlags_ReadOnly : 0);
 

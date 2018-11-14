@@ -184,7 +184,7 @@ struct Vertex_Layout { // assume interleaved (array of vertex structs)
 			if (loc < 0)
 				continue;
 
-			max_enabled_attributes_loc = max(max_enabled_attributes_loc, loc +1);
+			max_enabled_attributes_loc = MAX(max_enabled_attributes_loc, loc +1);
 
 			setup_attrib(loc, attr, vertex_size);
 		}

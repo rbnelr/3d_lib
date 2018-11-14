@@ -74,6 +74,10 @@ public:
 		return r;
 	}
 
+	v3 forw_dir_world () const {
+		return cam_to_world.m3() * v3(0,0,-1);
+	}
+
 	void update (Input& inp, flt dt, cstr gui_name="Camera") {
 		update(inp, dt, inp.get_window_screen_rect(), gui_name);
 	}

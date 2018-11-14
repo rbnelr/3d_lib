@@ -70,22 +70,22 @@ namespace intersect {
 			flt	tx1 = (aabb_min.x - ray_pos.x) * ray_dir_inv.x;
 			flt	tx2 = (aabb_max.x - ray_pos.x) * ray_dir_inv.x;
 
-			tmin = min(tx1, tx2);
-			tmax = max(tx1, tx2);
+			tmin = MIN(tx1, tx2);
+			tmax = MAX(tx1, tx2);
 		}
 		{
 			flt	ty1 = (aabb_min.y - ray_pos.y) * ray_dir_inv.y;
 			flt	ty2 = (aabb_max.y - ray_pos.y) * ray_dir_inv.y;
 
-			tmin = max(tmin, min(ty1, ty2));
-			tmax = min(tmax, max(ty1, ty2));
+			tmin = MAX(tmin, MIN(ty1, ty2));
+			tmax = MIN(tmax, MAX(ty1, ty2));
 		}
 		{
 			flt	tz1 = (aabb_min.z - ray_pos.z) * ray_dir_inv.z;
 			flt	tz2 = (aabb_max.z - ray_pos.z) * ray_dir_inv.z;
 
-			tmin = max(tmin, min(tz1, tz2));
-			tmax = min(tmax, max(tz1, tz2));
+			tmin = MAX(tmin, MIN(tz1, tz2));
+			tmax = MIN(tmax, MAX(tz1, tz2));
 		}
 
 		*out_tmin = tmin;
@@ -97,94 +97,63 @@ namespace intersect {
 		return intersect_AABB(ray_pos, ray_dir_inv, aabb_min, aabb_max, &tmin, &tmax);
 	}
 
+	constexpr iv3 face_normals[6] = {
+		iv3(+1,0,0),
+		iv3(-1,0,0),
+		iv3(0,+1,0),
+		iv3(0,-1,0),
+		iv3(0,0,+1),
+		iv3(0,0,-1),
+	};
 	template <typename GET_VOXEL>
-	bool raycast_voxels (GET_VOXEL get_voxel, v3 ray_pos, v3 ray_dir, iv3 pos_min, iv3 pos_max) { // GET_VOXEL: bool 
-		// iv3* out_hit_voxel, v3* hit_pos, iv3* out_face_normal
+	bool raycast_voxels (GET_VOXEL raycast_voxel, v3 ray_pos, v3 ray_dir, flt max_ray_dist=INF, iv3* out_hit_voxel=0, v3* out_hit_pos=0, int* out_hit_face=0) { // if ray starts inside block then the next block will be the first
 		
+		ray_dir = normalize(ray_dir);
+
 		iv3 step_delta = iv3(	(int)normalize(ray_dir.x),
 								(int)normalize(ray_dir.y),
-								(int)normalize(ray_dir.z) );
+								(int)normalize(ray_dir.z) ); // step direction in our voxel grid (we step one axis at a time) 
 		
 		v3 step = v3(			length(ray_dir / abs(ray_dir.x)),
 								length(ray_dir / abs(ray_dir.y)),
-								length(ray_dir / abs(ray_dir.z)) );
+								length(ray_dir / abs(ray_dir.z)) ); // how far along the ray we need to step to move by 1 voxel for each axis
 		step = select(ray_dir != 0, step, INF); // fix nan
 
-		iv3 cur_block		= (iv3)floor(ray_pos);
-		v3	pos_in_block	= ray_pos -floor(ray_pos);
+		iv3 cur_block = (iv3)floor(ray_pos); // voxel we consider the ray to start in
 
-		v3 next = step * select(ray_dir > 0, 1 -pos_in_block, pos_in_block);
+		v3 pos_in_block	= ray_pos -(v3)cur_block;
 
-		auto find_next_axis = [&] (v3 next) {
-			if (		next.x < next.y && next.x < next.z )	return 0;
-			else if (	next.y < next.z )						return 1;
-			else												return 2;
+		v3 next = step * select(ray_dir > 0, 1 -pos_in_block, pos_in_block); // next holds the distances along the ray of the next axis plane intersection (ie. voxel change) for each axis
+
+		auto find_next_axis = [&] (v3 next) { // the smallest element in next is the axis we change voxels along (ie. the closest axis plane intersection alogn the ray)
+			return smallest_comp(next);
 		};
 
-		int first_axis = find_next_axis(next);
+		int prev_axis = biggest_comp(next -step); // axis through which the cur_block was entered ( we want the biggest element in the vector, since we need the latest intersection)
 
 		for (;;) {
 			
-			if (any(cur_block < pos_min || cur_block >= pos_max))
-				break;
+			int axis = find_next_axis(next); // find which axis plane we intersect next
 
-			if (!get_voxel(cur_block, pos_in_block, 0)) {
-				//*hit_block = cur_block;
-				//*hit_face = face;
-				//*out_hit_voxel = cur_block;
+			v3 hit_pos = pos_in_block;
+			int hit_face = prev_axis * 2 +(ray_dir[prev_axis] < 0 ? 0 : 1); // face index corresponding to face_normals array
+
+			if (raycast_voxel(cur_block, hit_pos, hit_face)) { // call user handler for each voxel, user returns if this should be the final voxel hit
+				if (out_hit_voxel)	*out_hit_voxel = cur_block; // out params hold info of last voxel hit
+				if (out_hit_pos)	*out_hit_pos = hit_pos;
+				if (out_hit_face)	*out_hit_face = hit_face;
 				return true;
 			}
 		
-			int axis = find_next_axis(next); // find which axis plane we intersect next
-			
-			//face = (block_face_e)(axis*2 +(step_delta[axis] < 0 ? 1 : 0));
-			
-			//if (next[axis] > max_ray_dist) return false;
-			
-			next[axis] += step[axis]; // step along ray for next axis
-			cur_block[axis] += step_delta[axis]; // step voxel coord
+			if (next[axis] > max_ray_dist) // stop if the next voxel cannot be hit within a distace of max_ray_dist
+				return false;
+
+			cur_block[axis] += step_delta[axis]; // step through voxels
+
+			pos_in_block = (ray_pos + next[axis] * ray_dir) -(v3)cur_block; // calculate the position of the next hit relative to the next voxel
+			prev_axis = axis;
+
+			next[axis] += step[axis]; // step along ray
 		}
-		
-		#if 0
-		v3 ray_pos_floor = floor(ray_pos);
-
-		v3 pos_in_block = ray_pos -ray_pos_floor;
-
-		v3 next = step * select(ray_dir > 0, 1 -pos_in_block, pos_in_block);
-		next = select(ray_dir != 0, next, INF);
-
-		auto find_next_axis = [&] (v3 next) {
-			if (		next.x < next.y && next.x < next.z )	return 0;
-			else if (	next.y < next.z )						return 1;
-			else												return 2;
-		};
-
-		iv3 cur_block = (iv3)ray_pos_floor;
-
-		int first_axis = find_next_axis(next);
-		block_face_e face = (block_face_e)(first_axis*2 +(step_delta[first_axis] > 0 ? 1 : 0));
-
-		for (;;) {
-
-			//highlight_block(cur_block);
-			Block* b = query_block(cur_block);
-			if (block_props[b->type].breakable) {
-				*hit_block = cur_block;
-				*hit_face = face;
-				return b;
-			}
-
-			int axis = find_next_axis(next);
-
-			face = (block_face_e)(axis*2 +(step_delta[axis] < 0 ? 1 : 0));
-
-			if (next[axis] > max_dist) return nullptr;
-
-			next[axis] += step[axis];
-			cur_block[axis] += step_delta[axis];
-		}
-		#endif
-
-		return false;
 	}
 }

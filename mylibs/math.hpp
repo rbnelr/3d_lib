@@ -23,6 +23,7 @@ namespace math {
 	using std::ceil;
 	using std::pow;
 	using std::fmod;
+	using std::round;
 
 	// windows.h defines min and max by default
 	#undef min
@@ -83,27 +84,27 @@ namespace math {
 	INL constexpr f32 select (bool c, f32 l, f32 r) {	return c ? l : r; }
 	INL constexpr s32 select (bool c, s32 l, s32 r) {	return c ? l : r; }
 
-	INL constexpr s32 min (s32 l, s32 r) { return l <= r ? l : r; }
-	INL constexpr s32 max (s32 l, s32 r) { return l >= r ? l : r; }
-	INL constexpr u32 min (u32 l, u32 r) { return l <= r ? l : r; }
-	INL constexpr u32 max (u32 l, u32 r) { return l >= r ? l : r; }
-	INL constexpr s64 min (s64 l, s64 r) { return l <= r ? l : r; }
-	INL constexpr s64 max (s64 l, s64 r) { return l >= r ? l : r; }
-	INL constexpr u64 min (u64 l, u64 r) { return l <= r ? l : r; }
-	INL constexpr u64 max (u64 l, u64 r) { return l >= r ? l : r; }
+	INL constexpr s32 MIN (s32 l, s32 r) { return l <= r ? l : r; }
+	INL constexpr s32 MAX (s32 l, s32 r) { return l >= r ? l : r; }
+	INL constexpr u32 MIN (u32 l, u32 r) { return l <= r ? l : r; }
+	INL constexpr u32 MAX (u32 l, u32 r) { return l >= r ? l : r; }
+	INL constexpr s64 MIN (s64 l, s64 r) { return l <= r ? l : r; }
+	INL constexpr s64 MAX (s64 l, s64 r) { return l >= r ? l : r; }
+	INL constexpr u64 MIN (u64 l, u64 r) { return l <= r ? l : r; }
+	INL constexpr u64 MAX (u64 l, u64 r) { return l >= r ? l : r; }
 
-	INL constexpr f32 min (f32 l, f32 r) { return l <= r ? l : r; }
-	INL constexpr f32 max (f32 l, f32 r) { return l >= r ? l : r; }
-	INL constexpr f64 min (f64 l, f64 r) { return l <= r ? l : r; }
-	INL constexpr f64 max (f64 l, f64 r) { return l >= r ? l : r; }
+	INL constexpr f32 MIN (f32 l, f32 r) { return l <= r ? l : r; }
+	INL constexpr f32 MAX (f32 l, f32 r) { return l >= r ? l : r; }
+	INL constexpr f64 MIN (f64 l, f64 r) { return l <= r ? l : r; }
+	INL constexpr f64 MAX (f64 l, f64 r) { return l >= r ? l : r; }
 
-	INL constexpr s32 clamp (s32 val, s32 l, s32 h) {	return min( max(val,l), h ); }
-	INL constexpr u32 clamp (u32 val, u32 l, u32 h) {	return min( max(val,l), h ); }
-	INL constexpr s64 clamp (s64 val, s64 l, s64 h) {	return min( max(val,l), h ); }
-	INL constexpr u64 clamp (u64 val, u64 l, u64 h) {	return min( max(val,l), h ); }
+	INL constexpr s32 clamp (s32 val, s32 l, s32 h) {	return MIN( MAX(val,l), h ); }
+	INL constexpr u32 clamp (u32 val, u32 l, u32 h) {	return MIN( MAX(val,l), h ); }
+	INL constexpr s64 clamp (s64 val, s64 l, s64 h) {	return MIN( MAX(val,l), h ); }
+	INL constexpr u64 clamp (u64 val, u64 l, u64 h) {	return MIN( MAX(val,l), h ); }
 
-	INL constexpr f32 clamp (f32 val, f32 l=0, f32 h=1) {	return min( max(val,l), h ); }
-	INL constexpr f64 clamp (f64 val, f64 l=0, f64 h=1) {	return min( max(val,l), h ); }
+	INL constexpr f32 clamp (f32 val, f32 l=0, f32 h=1) {	return MIN( MAX(val,l), h ); }
+	INL constexpr f64 clamp (f64 val, f64 l=0, f64 h=1) {	return MIN( MAX(val,l), h ); }
 
 	INL constexpr f32 lerp (f32 a, f32 b, f32 t) {		return a*(1.0f -t) +b*t; }
 

@@ -18,7 +18,7 @@ namespace string {
 		size_t old_size = s->size();
 		for (;;) {
 			auto ret = vsnprintf(&(*s)[old_size], s->size() -old_size +1, format, vl); // i think i'm technically not allowed to overwrite the null terminator
-			ret = max(0, ret);
+			ret = MAX(0, ret);
 			bool was_bienough = (u32)ret < (s->size() -old_size +1);
 			s->resize(old_size +(u32)ret);
 			if (was_bienough) break;

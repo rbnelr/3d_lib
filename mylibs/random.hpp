@@ -30,7 +30,7 @@ namespace random {
 
 		return distribution(generator.generator);
 	}
-	bool chance (flt prob=0.5f) {							return chance(global_generator, prob); }
+	bool chance (flt prob=0.5f) {							return chance(global_generator, prob) ? 1 : 0; }
 
 	// int
 	int uniform (Generator& generator, int min, int max) {

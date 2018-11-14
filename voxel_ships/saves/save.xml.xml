@@ -1,7 +1,7 @@
 <wireframe_enable>false</wireframe_enable>
 <Camera>
-	<pos_world>-14.6283, -20.5036, 9.48251</pos_world>
-	<altazimuth>-37.5601 deg, -35.76 deg, 0 deg</altazimuth>
+	<pos_world>-6.37465, -6.24976, 6.08935</pos_world>
+	<altazimuth>-46.0799 deg, -33.48 deg, 0 deg</altazimuth>
 	<vfov>75 deg</vfov>
 	<clip_near>0.0625</clip_near>
 	<clip_far>1024</clip_far>

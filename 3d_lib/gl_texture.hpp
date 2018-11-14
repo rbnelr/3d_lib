@@ -51,7 +51,7 @@ template <typename FOREACH> int mipmap_chain (iv2 initial_size, FOREACH f) {
 		if (all(sz == 1))
 			break;
 
-		sz = max(sz / 2, 1);
+		sz = MAX(sz / 2, 1);
 	}
 	return mip_i;
 }

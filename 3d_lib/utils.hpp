@@ -209,7 +209,7 @@ namespace engine {
 		{ "pos_model",			FV3,	(int)offsetof(Vertex_Draw_Lines, pos_model) },
 	}};
 
-	void draw_lines (Gpu_Mesh const& lines, v3 pos, v3 size=1, lrgba col=1) {
+	void draw_lines (Gpu_Mesh const& lines, v3 pos, quat ori=quat::ident(), v3 size=1, lrgba col=1) {
 
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -244,7 +244,7 @@ namespace engine {
 		auto* s = use_shader("_simple_draw_rect");
 		if (s) {
 
-			hm model_to_world = translateH(pos) * scaleH(size);
+			hm model_to_world = translateH(pos) * convert_to_hm(ori) * scaleH(size);
 
 			set_uniform(s, "model_to_world", model_to_world.m4());
 			set_uniform(s, "col", col);
@@ -257,10 +257,10 @@ namespace engine {
 		mesh.vertices.clear();
 		mesh.vertices.push_back({ 0 });
 		mesh.vertices.push_back({ b -a });
-		draw_lines(mesh.upload(), a, 1, col);
+		draw_lines(mesh.upload(), a, quat::ident(), 1, col);
 	}
 
-	void draw_box_outline (v3 pos, v3 size, lrgba col=1) {
+	void draw_box_outline (v3 pos, quat ori, v3 size, lrgba col=1) {
 		static auto box = [] () {
 			Cpu_Mesh<Vertex_Draw_Lines> mesh;
 
@@ -287,7 +287,7 @@ namespace engine {
 			return mesh.upload();
 		} ();
 
-		draw_lines(box, pos, size, col);
+		draw_lines(box, pos, ori, size, col);
 	}
 
 	void draw_simple (Gpu_Mesh const& mesh, v3 pos_world, quat ori=quat::ident(), v3 scale=1, lrgba col=1) {

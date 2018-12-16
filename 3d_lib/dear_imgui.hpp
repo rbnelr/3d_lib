@@ -88,6 +88,26 @@ namespace ImGui {
 	IMGUI_API void TextUnformatted (std::string const& s) {
 		TextUnformatted(&s[0], &s[ s.size() ]);
 	}
+
+	IMGUI_API void ColorEdit_srgb (const char* label, colors::lrgb* col) {
+		using namespace engine;
+		
+		v3 srgb = to_srgb(*col);
+
+		ColorEdit3(label, &srgb.x);
+
+		*col = to_linear(srgb);
+	}
+	IMGUI_API void ColorEdit_srgb (const char* label, colors::lrgba* col) {
+		using namespace engine;
+
+		v4 srgba = v4(to_srgb(col->xyz()), col->w);
+
+		ColorEdit4(label, &srgba.x);
+
+		*col = colors::lrgba(to_linear(srgba.xyz()), srgba.w);
+	}
+	
 }
 
 #include "mylibs/image_processing.hpp"

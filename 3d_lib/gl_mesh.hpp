@@ -151,9 +151,12 @@ inline void swap (EBO& l, EBO& r) {
 struct Vertex_Layout { // assume interleaved (array of vertex structs)
 	int		vertex_size; // sizeof(Vertex) == stride
 
-	void setup_attrib (GLint loc, Vertex_Attribute const& attr, GLsizei stride) const {
+	static void setup_attrib (GLint loc, Vertex_Attribute const& attr, GLsizei stride, int instanced_divisor=0) {
 
 		glEnableVertexAttribArray(loc);
+
+		//if (instanced_divisor >= 0)
+		glVertexAttribDivisor(loc, instanced_divisor);
 
 		switch (attr.type) {
 			case FLT:			glVertexAttribPointer(loc, 1, GL_FLOAT, GL_FALSE,			stride, (void*)(uptr)attr.offset);	break;
@@ -171,12 +174,10 @@ struct Vertex_Layout { // assume interleaved (array of vertex structs)
 	}
 
 	std::vector<Vertex_Attribute> attributes;
-
+	
 	void bind (Shader const& shad) const { // bind a vertex layout which requires the used shader
 
-		static int max_enabled_attributes_loc = 0;
-		for (int loc=(int)attributes.size(); loc <= max_enabled_attributes_loc; ++loc)
-			glDisableVertexAttribArray(loc);
+		disable_attribs((int)attributes.size());
 
 		for (auto& attr : attributes) {
 
@@ -190,7 +191,29 @@ struct Vertex_Layout { // assume interleaved (array of vertex structs)
 		}
 
 	}
+
+	static int max_enabled_attributes_loc;
+	static void disable_attribs (int attrib_count) {
+		for (int loc=attrib_count; loc <= max_enabled_attributes_loc; ++loc)
+			glDisableVertexAttribArray(loc);
+	}
+
+	void bind_instanced (Shader const& shad, int instanced_divisor) const { // bind a vertex layout which requires the used shader
+
+		for (auto& attr : attributes) {
+			
+			auto loc = glGetAttribLocation(shad.get_prog_handle(), attr.name.c_str());
+			if (loc < 0)
+				continue;
+
+			max_enabled_attributes_loc = MAX(max_enabled_attributes_loc, loc +1);
+
+			setup_attrib(loc, attr, vertex_size, instanced_divisor);
+		}
+
+	}
 };
+int Vertex_Layout::max_enabled_attributes_loc = 0;
 
 ////
 struct Gpu_Mesh;
@@ -264,7 +287,7 @@ struct Gpu_Mesh {
 	template <> static constexpr index_type_e map_index_type<u16> () { return UNSIGNED_SHORT; }
 	template <> static constexpr index_type_e map_index_type<u32> () { return UNSIGNED_INT; }
 
-	template <typename VERT, typename INDX>
+	template <typename VERT, typename INDX=u16>
 	static Gpu_Mesh generate () {
 		Gpu_Mesh m;
 		m.layout = &VERT::layout;
@@ -295,7 +318,7 @@ struct Gpu_Mesh {
 	}
 	void reupload (void const* vertecies, GLuint vertex_count,
 							void const* indecies, GLuint index_count,
-							Vertex_Layout const* layout, index_type_e index_size) {
+							Vertex_Layout const* layout, index_type_e index_size=UNSIGNED_SHORT) {
 		assert(this->layout == layout);
 		assert(this->index_type == index_size);
 
@@ -363,6 +386,38 @@ struct Gpu_Mesh {
 			assert(count >= 0 && count <= (GLsizei)vertex_count);
 			glDrawArrays(GL_TRIANGLES, first, count);
 		}
+	}
+};
+
+struct Instanced_Draw {
+	// can you use indexing here?
+	Gpu_Mesh* instanced_mesh; // mesh that gets repeated
+	Gpu_Mesh instance_data; // attribute date for each instance
+
+	void bind (Shader const& shad) const {
+		assert(instanced_mesh->vertecies.get_handle() != 0);
+		assert(instance_data.vertecies.get_handle() != 0);
+
+		Vertex_Layout::disable_attribs((int)instanced_mesh->layout->attributes.size() + (int)instance_data.layout->attributes.size());
+
+		instanced_mesh->vertecies.bind();
+		instanced_mesh->layout->bind_instanced(shad, 0);
+
+		instance_data.vertecies.bind();
+		instance_data.layout->bind_instanced(shad, 1);
+	}
+
+	void draw (primitive_e prim, Shader const& shad) const { // draws entire buffer
+		bind(shad);
+
+		if (instanced_mesh->is_indexed()) {
+			glDrawElementsInstanced(prim, (GLsizei)instanced_mesh->index_count, instanced_mesh->index_type, (void*)0, (GLsizei)instance_data.vertex_count);
+		} else {
+			glDrawArraysInstanced(prim, 0, (GLsizei)instanced_mesh->vertex_count, (GLsizei)instance_data.vertex_count);
+		}
+	}
+	void draw (Shader const& shad) const { // draws entire buffer
+		draw(TRIANGLES, shad);
 	}
 };
 

@@ -64,4 +64,15 @@ namespace random {
 	v2 uniform (Generator& generator, v2 min, v2 max) {		return v2(	uniform(generator, min.x, max.x), uniform(generator, min.y, max.y) ); }
 	v2 uniform (v2 min, v2 max) {							return uniform(global_generator, min,max); }
 	
+	//
+	flt normal (Generator& generator, flt stddev, flt mean=0) {
+		std::normal_distribution<flt>	distribution (mean, stddev);
+
+		return distribution(generator.generator);
+	}
+	flt normal (flt stddev, flt mean=0) {					return normal(global_generator, stddev,mean); }
+
+	v2 normal (Generator& generator, v2 stddev, v2 mean=0) {	return v2( normal(generator, stddev.x,mean.x), normal(generator, stddev.y,mean.y) ); }
+	v2 normal (v2 stddev, v2 mean=0) {							return normal(global_generator, stddev,mean); }
+
 }

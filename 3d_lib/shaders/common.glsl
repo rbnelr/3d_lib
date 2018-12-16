@@ -56,6 +56,8 @@ vec3 hsl_to_rgb (vec3 hsl) { // hue is periodic since it represents the angle on
 	return rgb;
 }
 
+#define length_sqr(x) dot((x),(x))
+
 float map (float x, float a, float b) {
 	return (x -a) / (b -a);
 }

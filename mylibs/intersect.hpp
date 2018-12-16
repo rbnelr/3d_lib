@@ -7,6 +7,12 @@ namespace intersect {
 	using namespace vector;
 	using namespace float_precision;
 
+	bool intersect (v2 point, v2 rect_a, v2 rect_b, v2* hit_uv=0) {
+		v2 uv = map(point, rect_a, rect_b);
+		*hit_uv = uv;
+		return all(uv >= 0 && uv <= 1);
+	}
+
 	bool raycast_plane (v3 ray_pos, v3 ray_dir, v3 plane_pos, v3 plane_a, v3 plane_b, v3* hit_pos, v2* hit_uv, flt* hit_t) { // plane_normal is cross(plane_a, plane_b), hit is plane_pos + hit_uv.x * plane_a + hit_uv.y * plane_b
 
 		v3 plane_normal = cross(plane_a, plane_b);

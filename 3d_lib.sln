@@ -56,6 +56,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "smooth_caves", "smooth_cave
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "voxel_ships", "voxel_ships\voxel_ships.vcxproj", "{C32E33DA-451D-4FF7-955C-50227838CF08}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "particles", "particles\particles.vcxproj", "{E8FB41BC-7575-4293-B185-D9E204425881}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -184,6 +186,14 @@ Global
 		{C32E33DA-451D-4FF7-955C-50227838CF08}.Release|x64.Build.0 = Release|x64
 		{C32E33DA-451D-4FF7-955C-50227838CF08}.Release|x86.ActiveCfg = Release|Win32
 		{C32E33DA-451D-4FF7-955C-50227838CF08}.Release|x86.Build.0 = Release|Win32
+		{E8FB41BC-7575-4293-B185-D9E204425881}.Debug|x64.ActiveCfg = Debug|x64
+		{E8FB41BC-7575-4293-B185-D9E204425881}.Debug|x64.Build.0 = Debug|x64
+		{E8FB41BC-7575-4293-B185-D9E204425881}.Debug|x86.ActiveCfg = Debug|Win32
+		{E8FB41BC-7575-4293-B185-D9E204425881}.Debug|x86.Build.0 = Debug|Win32
+		{E8FB41BC-7575-4293-B185-D9E204425881}.Release|x64.ActiveCfg = Release|x64
+		{E8FB41BC-7575-4293-B185-D9E204425881}.Release|x64.Build.0 = Release|x64
+		{E8FB41BC-7575-4293-B185-D9E204425881}.Release|x86.ActiveCfg = Release|Win32
+		{E8FB41BC-7575-4293-B185-D9E204425881}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -31,6 +31,7 @@ public:
 	Camera2D (v2 pos_world, fv2 size_world=1, flt rot=0, bool controllable=true, bool black_bars=false):
 		pos_world{pos_world}, size_world{size_world}, rot{rot}, controllable{controllable}, black_bars{black_bars} {}
 
+	int		drag_button = GLFW_MOUSE_BUTTON_RIGHT;
 private:
 	bool	dragging = false;
 	v2		grab_pos_world;
@@ -104,14 +105,14 @@ public:
 				size_world.x = size_world.y * (old_size_world.x / old_size_world.y); // keep aspect ratio
 			}
 			{ // dragging
-				v2 mouse_pos_cam = inp.mouse_cursor_pos_clip(get_subrect()) * (size_world / 2);
+				v2 mouse_pos_cam = inp.mouse_cursor_pos_ndc(get_subrect()) * (size_world / 2);
 
-				if (inp.went_down(GLFW_MOUSE_BUTTON_LEFT) && inp.mouse_curson_in(screen_rect)) {
+				if (inp.went_down(drag_button) && inp.mouse_curson_in(screen_rect)) {
 					grab_pos_world = (rotate2(rot) * mouse_pos_cam) +pos_world;
 					dragging = true;
 				}
 
-				if (!inp.is_down(GLFW_MOUSE_BUTTON_LEFT))
+				if (!inp.is_down(drag_button))
 					dragging = false;
 
 				if (dragging)
@@ -148,7 +149,7 @@ public:
 			v2 aspect = size_world;
 
 			v2 tmp = (v2)_screen_rect.size_px / aspect;
-			tmp = min(tmp.x,tmp.y);
+			tmp = MIN(tmp.x,tmp.y);
 
 			subrect.size_px = (iv2)(tmp * aspect);
 			subrect.offs_px = (_screen_rect.size_px -subrect.size_px) / 2 + _screen_rect.offs_px;

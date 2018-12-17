@@ -34,7 +34,7 @@ struct Particles {
 	Particle spawn_particle (v2 world_size) {
 		Particle p;
 		p.pos = random::uniform(-world_size/2, +world_size/2);
-		p.vel = random::normal(v2(1)) * 5;
+		p.vel = random::normal(v2(1)) * size * 10;
 		return p;
 	}
 	void gen_vbo () {
@@ -42,6 +42,41 @@ struct Particles {
 		
 		vbo.instanced_mesh = &instanced_mesh;
 		vbo.instance_data = Gpu_Mesh::generate<Particle>();
+	}
+
+	bool predict_collision (v2 a_pos, v2 a_vel, flt a_radius, v2 b_pos, v2 b_vel, flt b_radius, flt* time_to_collision) {
+		// assume linear movement (no acceleration)
+		// collision critera: distance(a.pos,b.pos) <= (a.radius + b.radius)
+		// dist_a_b(t) should be a quadratic function, solve for y=(a.radius + b.radius) intersection, if exists and t<=dt then we have a collision
+
+		v2 pos_rel = b_pos - a_pos;
+		v2 vel_rel = b_vel - a_vel;
+
+		flt coll_dist = a_radius + b_radius;
+
+		flt speed_rel = length(vel_rel);
+
+		if (speed_rel == 0) { // no movement
+			*time_to_collision = 0;
+			return length_sqr(pos_rel) <= coll_dist*coll_dist; // either collision already or never
+		}
+
+		// line from rel pos and rel vel
+		v2 dir = vel_rel / speed_rel;
+		v2 normal = rotate2_90(dir);
+
+		flt closest_dist = abs(dot(normal, pos_rel)); // distance between line and origin (particle a)
+		if (closest_dist > coll_dist)
+			return false; // no collision
+
+		flt dist_to_closest = dot(dir, -pos_rel); // dist along line to closest point
+
+		flt half_secant = sqrt(coll_dist*coll_dist -closest_dist*closest_dist); // a^2 = c^2 - b^2
+
+		flt dist_to_coll = dist_to_closest -half_secant;
+
+		*time_to_collision = dist_to_coll / speed_rel; // could be negative
+		return dist_to_closest >= 0; // if the particles are moving away from each other we dont report an collision, this should prevent particles from getting stuck but also them moving into each other
 	}
 
 	void update (v2 world_size, Input& inp, flt dt) {
@@ -68,6 +103,31 @@ struct Particles {
 		flt use_dt = paused ? 0 : dt_multiplier * dt;
 
 		for (auto& p : particles) {
+
+			flt earliest_coll_t = INF;
+			Particle* other_p = nullptr;
+
+			for (auto& other : particles) {
+				flt coll_t;
+				if (&p != &other && predict_collision(p.pos, p.vel, size/2, other.pos, other.vel, size/2, &coll_t)) {
+					earliest_coll_t = MIN(earliest_coll_t, coll_t);
+					other_p = &other;
+				}
+			}
+
+			if (earliest_coll_t >= 0 && earliest_coll_t < use_dt) {
+				// update both colliding particles
+
+				v2 avg_vel = (p.vel + other_p->vel) / 2;
+
+				p.pos += p.vel * earliest_coll_t;
+				p.vel = avg_vel;
+
+				other_p->pos += other_p->vel * earliest_coll_t;
+				other_p->vel = avg_vel;
+				continue;
+			}
+
 			p.pos += p.vel * use_dt;
 		}
 	}

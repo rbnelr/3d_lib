@@ -19,120 +19,158 @@ const Vertex_Layout Particle::layout = { (int)sizeof(Particle), {
 
 struct Particles {
 	
-	int count = 2000;
-	std::vector<Particle> particles;
+	int						count = 2000;
+	std::vector<Particle>	particles;
+	flt						size = 0.5f;
 
-	flt		dt_multiplier = 1;
-	bool	paused = false;
+	random::Generator		rand;
+	bool					random_seed = true;
+	int						seed = 0;
 
-	flt		size = 0.5f;
-	lrgba	col = srgb8(255,4,4).to_lrgba();
+	Particles () {
+		respawn_particles();
+	}
+	Particles (std::vector<Particle> ps, int ) {
+		respawn_particles();
+	}
 
-	Gpu_Mesh instanced_mesh;
-	Instanced_Draw vbo;
+	void respawn_particles () {
+		if (random_seed)
+			seed = random::Generator::get_rand_seed();
 
+		rand = random::Generator(seed);
+
+		particles.clear();
+	}
 	Particle spawn_particle (v2 world_size) {
 		Particle p;
-		p.pos = random::uniform(-world_size/2, +world_size/2);
-		p.vel = random::normal(v2(1)) * size * 10;
+		p.pos = random::uniform(rand, -world_size/2, +world_size/2);
+		p.vel = random::normal(rand, v2(1)) * size * 10;
 		return p;
 	}
-	void gen_vbo () {
-		instanced_mesh = engine::gen_rect<Vertex_Draw_Rect>([] (v2 p, v2 uv) { return Vertex_Draw_Rect{p}; }).upload();
-		
-		vbo.instanced_mesh = &instanced_mesh;
-		vbo.instance_data = Gpu_Mesh::generate<Particle>();
-	}
 
-	bool predict_collision (v2 a_pos, v2 a_vel, flt a_radius, v2 b_pos, v2 b_vel, flt b_radius, flt* time_to_collision) {
-		// assume linear movement (no acceleration)
-		// collision critera: distance(a.pos,b.pos) <= (a.radius + b.radius)
-		// dist_a_b(t) should be a quadratic function, solve for y=(a.radius + b.radius) intersection, if exists and t<=dt then we have a collision
+	void update (v2 world_size, Input& inp) {
 
-		v2 pos_rel = b_pos - a_pos;
-		v2 vel_rel = b_vel - a_vel;
+		imgui::Checkbox("random_seed", &random_seed);
+		imgui::InputInt("seed", &seed);
 
-		flt coll_dist = a_radius + b_radius;
-
-		flt speed_rel = length(vel_rel);
-
-		if (speed_rel == 0) { // no movement
-			*time_to_collision = 0;
-			return length_sqr(pos_rel) <= coll_dist*coll_dist; // either collision already or never
-		}
-
-		// line from rel pos and rel vel
-		v2 dir = vel_rel / speed_rel;
-		v2 normal = rotate2_90(dir);
-
-		flt closest_dist = abs(dot(normal, pos_rel)); // distance between line and origin (particle a)
-		if (closest_dist > coll_dist)
-			return false; // no collision
-
-		flt dist_to_closest = dot(dir, -pos_rel); // dist along line to closest point
-
-		flt half_secant = sqrt(coll_dist*coll_dist -closest_dist*closest_dist); // a^2 = c^2 - b^2
-
-		flt dist_to_coll = dist_to_closest -half_secant;
-
-		*time_to_collision = dist_to_coll / speed_rel; // could be negative
-		return dist_to_closest >= 0; // if the particles are moving away from each other we dont report an collision, this should prevent particles from getting stuck but also them moving into each other
-	}
-
-	void update (v2 world_size, Input& inp, flt dt) {
-		if (!vbo.instanced_mesh)
-			gen_vbo();
-		
 		if (imgui::Button("Respawn Particles") || inp.went_down('R'))
-			particles.clear();
+			respawn_particles();
 		
 		imgui::DragInt("count", &count, 1.0f/10, 0,INT_MAX);
 		imgui::DragFloat("size", &size, 1.0f/100);
-		imgui::ColorEdit_srgb("col", &col);
-
-		imgui::Checkbox("paused", &paused);
-		if (inp.went_down('P'))	paused = !paused;
-		imgui::DragFloat("dt_multiplier", &dt_multiplier, 1.0f/100);
 		
 		int old_count = (int)particles.size();
 		particles.resize(MAX(count, 0));
 
 		for (int i=old_count; i<count; ++i)
 			particles[i] = spawn_particle(world_size);
+		
+	}
+};
+
+bool predict_collision (v2 a_pos, v2 a_vel, flt a_radius, v2 b_pos, v2 b_vel, flt b_radius, flt* time_to_collision) {
+	// assume linear movement (no acceleration)
+	// collision critera: distance(a.pos,b.pos) <= (a.radius + b.radius)
+	// dist_a_b(t) should be a quadratic function, solve for y=(a.radius + b.radius) intersection, if exists and t<=dt then we have a collision
+
+	v2 pos_rel = b_pos - a_pos;
+	v2 vel_rel = b_vel - a_vel;
+
+	flt coll_dist = a_radius + b_radius;
+
+	flt speed_rel = length(vel_rel);
+
+	if (speed_rel == 0) { // no movement
+		*time_to_collision = 0;
+		return length_sqr(pos_rel) <= coll_dist*coll_dist; // either collision already or never
+	}
+
+	// line from rel pos and rel vel
+	v2 dir = vel_rel / speed_rel;
+	v2 normal = rotate2_90(dir);
+
+	flt closest_dist = abs(dot(normal, pos_rel)); // distance between line and origin (particle a)
+	if (closest_dist > coll_dist)
+		return false; // no collision
+
+	flt dist_to_closest = dot(dir, -pos_rel); // dist along line to closest point
+
+	flt half_secant = sqrt(coll_dist*coll_dist -closest_dist*closest_dist); // a^2 = c^2 - b^2
+
+	flt dist_to_coll = dist_to_closest -half_secant;
+
+	*time_to_collision = dist_to_coll / speed_rel; // could be negative
+	return dist_to_closest >= 0; // if the particles are moving away from each other we dont report an collision, this should prevent particles from getting stuck but also them moving into each other
+}
+
+struct Particle_Sim {
+
+	flt		dt_multiplier = 1;
+	bool	paused = false;
+
+	void update (Particles& p, Input& inp, flt dt) {
+
+		imgui::Checkbox("paused", &paused);
+		if (inp.went_down('P'))	paused = !paused;
+		imgui::DragFloat("dt_multiplier", &dt_multiplier, 1.0f/100);
 
 		flt use_dt = paused ? 0 : dt_multiplier * dt;
 
-		for (auto& p : particles) {
+		for (auto& p : p.particles) {
 
-			flt earliest_coll_t = INF;
-			Particle* other_p = nullptr;
-
-			for (auto& other : particles) {
-				flt coll_t;
-				if (&p != &other && predict_collision(p.pos, p.vel, size/2, other.pos, other.vel, size/2, &coll_t)) {
-					earliest_coll_t = MIN(earliest_coll_t, coll_t);
-					other_p = &other;
-				}
-			}
-
-			if (earliest_coll_t >= 0 && earliest_coll_t < use_dt) {
-				// update both colliding particles
-
-				v2 avg_vel = (p.vel + other_p->vel) / 2;
-
-				p.pos += p.vel * earliest_coll_t;
-				p.vel = avg_vel;
-
-				other_p->pos += other_p->vel * earliest_coll_t;
-				other_p->vel = avg_vel;
-				continue;
-			}
+			//flt earliest_coll_t = INF;
+			//Particle* other_p = nullptr;
+			//
+			//for (auto& other : particles) {
+			//	flt coll_t;
+			//	if (&p != &other && predict_collision(p.pos, p.vel, size/2, other.pos, other.vel, size/2, &coll_t)) {
+			//		earliest_coll_t = MIN(earliest_coll_t, coll_t);
+			//		other_p = &other;
+			//	}
+			//}
+			//
+			//if (earliest_coll_t >= 0 && earliest_coll_t < use_dt) {
+			//	// update both colliding particles
+			//
+			//	v2 avg_vel = (p.vel + other_p->vel) / 2;
+			//
+			//	p.pos += p.vel * earliest_coll_t;
+			//	p.vel = avg_vel;
+			//
+			//	other_p->pos += other_p->vel * earliest_coll_t;
+			//	other_p->vel = avg_vel;
+			//	continue;
+			//}
 
 			p.pos += p.vel * use_dt;
 		}
 	}
+};
 
-	void draw (Camera2D& cam) {
+struct Particle_Renderer {
+	
+	lrgba	col = srgb8(255,4,4).to_lrgba();
+
+	Gpu_Mesh instanced_mesh;
+	Instanced_Draw vbo;
+
+	void gen_vbo () {
+		instanced_mesh = engine::gen_rect<Vertex_Draw_Rect>([] (v2 p, v2 uv) { return Vertex_Draw_Rect{p}; }).upload();
+
+		vbo.instanced_mesh = &instanced_mesh;
+		vbo.instance_data = Gpu_Mesh::generate<Particle>();
+	}
+
+	void update () {
+		imgui::ColorEdit_srgb("col", &col);
+		
+	}
+
+	void draw (Particles const& p, Camera2D& cam) {
+		if (!vbo.instanced_mesh)
+			gen_vbo();
+		
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glDisable(GL_DEPTH_TEST);
@@ -205,9 +243,9 @@ struct Particles {
 
 		auto* s = use_shader("draw_particles");
 		if (s) {
-			vbo.instance_data.reupload(&particles[0], (GLuint)particles.size(), nullptr,0, &Particle::layout);
+			vbo.instance_data.reupload(&p.particles[0], (GLuint)p.particles.size(), nullptr,0, &Particle::layout);
 
-			set_uniform(s, "particle_size", size);
+			set_uniform(s, "particle_size", p.size);
 			set_uniform(s, "particle_col", col);
 
 			set_uniform(s, "px_size_world", cam.size_world.x / (flt)cam.get_subrect().size_px.x);
@@ -218,14 +256,20 @@ struct Particles {
 };
 
 class App : public Application {
-	
+
 	v2 world_size = v2(140, 100);
 
 	Camera2D cam = Camera2D(0, world_size);
 
 	lrgb bg_col = srgb8(32,32,32).to_lrgb();
 
-	Particles particles;
+	Particles			particles;
+	Particle_Sim		sim;
+	Particle_Renderer	renderer;
+
+	Particles test_cases[] = {
+		Particles(),
+	};
 
 	void frame () {
 		
@@ -235,16 +279,17 @@ class App : public Application {
 		imgui::Separator();
 
 		imgui::ColorEdit_srgb("bg_col", &bg_col);
-
-		particles.update(world_size, inp,dt);
-
-		//
 		engine::draw_to_screen(inp.wnd_size_px);
-		
+
 		clear(0);
 		draw_rect(0, world_size, lrgba(bg_col, 1));
 
-		particles.draw(cam);
+		//
+		particles.update(world_size, inp);
+		sim.update(particles, inp,dt);
+
+		renderer.update();
+		renderer.draw(particles, cam);
 	}
 } app;
 

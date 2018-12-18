@@ -17,9 +17,17 @@ namespace random {
 	struct Generator {
 		std::default_random_engine generator;
 
-		Generator (): generator{ (uint)time(NULL) } {} // random seed
+		Generator (): generator{ get_rand_seed() } {} // random seed
 		Generator (uint seed): generator{seed} {} // seed with value
 		Generator (int seed): Generator((uint)seed) {} // seed with value
+
+		static int get_rand_seed () {
+			//return (int)time(NULL); // only ticks every second!!
+
+			LARGE_INTEGER li;
+			QueryPerformanceCounter(&li);
+			return (int)li.QuadPart;
+		}
 	};
 
 	Generator global_generator = Generator();
